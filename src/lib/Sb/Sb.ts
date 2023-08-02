@@ -1,13 +1,8 @@
-import { Cracks, type CracksLook } from "./Cracks";
-import { SubstrateRenderer, type LinesLook } from "./SubstrateRenderer";
-import { Zone, type ZoneLook } from "./Zone";
+import type { SbLook } from "$lib/Looks";
+import { Cracks } from "./Cracks";
+import { SubstrateRenderer } from "./SubstrateRenderer";
+import { Zone } from "./Zone";
 
-
-export type SbLook = {
-    zone: ZoneLook,
-    cracks: CracksLook,
-    lines: LinesLook,
-}
 
 export type SbCfg = {
     seed: string,

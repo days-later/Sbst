@@ -1,5 +1,6 @@
 import seedrandom from "seedrandom";
 import type { Zone } from "./Zone";
+import type { CracksLook } from "$lib/Looks";
 
 function get_padded_bounds( w: number, h: number, pad: number ) {
     if (pad < .5) pad = Math.floor( pad * Math.min( w, h ) );
@@ -159,24 +160,7 @@ class Crack {
 export type ICrack = Crack;
 
 
-export type CracksLook = {
-    padding?: { size: number, chance: number },
-    padding_straggler?: { size: number, chance: number },
 
-    max_cracks: number,
-    initial_cracks: number,
-    crack_seeds: number,
-    spawn_extra_crack_chances: number[], // [ chance of an extra crack, chance of an extra crack, ... ]
-
-    straggler_chance: number,
-
-    placed_pixels_share: number,
-
-    density?: {
-        zone_count: number,
-        max_fill_lvl: number,
-    },
-}
 
 type CracksCfg = {
     seed: string,

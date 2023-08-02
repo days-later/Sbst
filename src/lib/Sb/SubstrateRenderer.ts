@@ -1,20 +1,8 @@
 import seedrandom from "seedrandom";
 import type { Cracks, ICrack } from "./Cracks";
 import type { Zone } from "./Zone";
+import type { LinesLook } from "$lib/Looks";
 
-export type LineStyle = {
-    style: string,
-    width: number,
-    opacity: number,
-    chance?: number,
-};
-
-export type LinesLook = {
-    bg: string,
-    line: LineStyle,
-    road: LineStyle,
-    straggler: LineStyle,
-};
 
 type RendererCfg = {
     seed: string,

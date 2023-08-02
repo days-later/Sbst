@@ -1,4 +1,76 @@
-import type { SbLook } from "./Sb/Sb";
+import type { RenderType, TileRendererProp } from "./Sb/Zone"
+
+
+export type CracksLook = {
+    padding?: { size: number, chance: number },
+    padding_straggler?: { size: number, chance: number },
+
+    max_cracks: number,
+    initial_cracks: number,
+    crack_seeds: number,
+    spawn_extra_crack_chances: number[], // [ chance of an extra crack, chance of an extra crack, ... ]
+
+    straggler_chance: number,
+
+    placed_pixels_share: number,
+
+    density?: {
+        zone_count: number,
+        max_fill_lvl: number,
+    },
+}
+
+
+export type LineStyle = {
+    style: string,
+    width: number,
+    opacity: number,
+    chance?: number,
+}
+export type LinesLook = {
+    bg: string,
+    line: LineStyle,
+    road: LineStyle,
+    straggler: LineStyle,
+}
+
+type ZoneLayer = {
+    color?: string,
+    opacity?: number,
+
+    render?: TileRendererProp,
+
+    fill_chance?: number,
+    clear_chance?: number,
+}
+export type ZoneLayers = {
+    outside?: (ZoneLayer & {
+        radius: [ number, number ],
+    })[],
+    center?: ZoneLayer,
+    inside?: ZoneLayer & {
+        // walk_circle with this radius, the tile counts as "inside" if all walked tiles are of lvl "center" or "inside"
+        radius: number,
+    },
+}
+export type ZoneLook = {
+    zone_count: number,
+
+    layers: ZoneLayers,
+
+    allow_straggler?: boolean | {
+        empty?: boolean,
+        outside_lvls?: boolean | Set<number>,
+        center?: boolean,
+        inside?: boolean,
+    },
+}
+
+export type SbLook = {
+    cracks: CracksLook,
+    lines: LinesLook,
+    zone: ZoneLook,
+}
 
 export type LookOption = {
     name: string,
@@ -8,7 +80,7 @@ export type LookOption = {
         pg?: string
     },
     look: SbLook
-};
+}
 export const Looks: LookOption[] = [];
 
 
@@ -36,29 +108,28 @@ Looks[ 0 ] = {
                     {
                         radius: [ 0, 10 ],
                         color: '#c4efff',
-                        render_type: 'shoreline_jitter',
+                        render: 'shoreline_jitter',
                     },
                     {
                         radius: [ 0, 5 ],
                         color: '#fff',
-                        render_type: 'shoreline',
+                        render: 'shoreline',
                     },
                     {
                         radius: [ 0, 2 ],
                         color: '#afb',
                         opacity: .5,
-                        render_type: 'shoreline_jitter',
-                        render_var: .25,
+                        render: [ 'shoreline_jitter', .25 ],
                     },
                 ],
                 center: {
                     color: '#cfd',
-                    render_type: 'shoreline',
+                    render: 'shoreline',
                 },
                 inside: {
                     color: '#eff',
                     radius: 2,
-                    render_type: 'fill_jitter',
+                    render: 'fill_jitter',
                 },
 
             },
@@ -110,21 +181,20 @@ Looks[ 1 ] = {
 
             layers: {
                 outside: [
-
                     {
                         radius: [ 0, 3 ],
                         color: '#f52cee',
-                        render_type: 'shoreline_jitter',
+                        render: 'shoreline_jitter',
                     },
                     {
                         radius: [ 0, 2 ],
                         color: '#fff',
-                        render_type: 'shoreline_jitter',
+                        render: 'shoreline_jitter',
                     },
                 ],
                 center: {
                     color: '#eef',
-                    render_type: 'shoreline_jitter',
+                    render: 'shoreline_jitter',
                 },
             },
 
@@ -179,13 +249,11 @@ Looks[ 2 ] = {
                     {
                         radius: [ 0, 2 ],
                         color: '#f5f0b3',
-                        render_type: 'fill_jitter',
-                        render_var: 0.5,
+                        render: [ 'fill_jitter', .5 ],
                     },
                 ],
                 center: {
                     color: '#f5f0b3',
-                    render_var: 0,
                 },
             },
 
@@ -221,7 +289,7 @@ Looks[ 3 ] = {
     ui_theme: {
         bg: '#fffede',
         fg: '#777',
-        pg: '#fff',
+        pg: '#777',
     },
 
     look: {
@@ -241,12 +309,11 @@ Looks[ 3 ] = {
                         radius: [ 0, 1 ],
                         color: '#fff',
                         opacity: .3,
-                        render_type: 'shoreline',
+                        render: 'shoreline',
                     },
                 ],
                 center: {
                     color: '#fff',
-
                 },
             },
 
@@ -321,6 +388,66 @@ Looks[ 4 ] = {
             density: {
                 zone_count: 100,
                 max_fill_lvl: 0.6,
+            },
+        },
+    }
+}
+
+
+Looks[ 5 ] = {
+    name: 'inf',
+
+    ui_theme: {
+        bg: '#fff',
+        fg: '#f26',
+        pg: '#f26'
+    },
+
+    look: {
+        lines: {
+            bg: '#fff',
+            line: { style: '#fff', opacity: 1, width: .25, chance: 1 },
+            road: { style: '#000', opacity: 1, width: 5, chance: 0 },
+            straggler: { style: '#fff', opacity: 1, width: 5, chance: 1 },
+        },
+
+        zone: {
+            zone_count: 320,
+
+            layers: {
+                outside: [
+                    //{ radius: [ 0, 6 ], color: '#ccc', opacity: .05, render: [ 'fill_jitter', { v: 10, c: 20 } ], fill_chance: .25 },
+                    //{ radius: [ 0, 3 ], color: '#000', opacity: 1, render: [ 'fill_jitter', { v: 2, c: 12 } ], fill_chance: 1 },
+
+                    { radius: [ 0, 6 ], color: '#f26', opacity: .1, render: [ 'fill_jitter', 5 ], fill_chance: .25 },
+                    { radius: [ 0, 6 ], color: '#f26', opacity: .1, render: [ 'fill_jitter', 5 ], fill_chance: .25 },
+                    { radius: [ 0, 3 ], color: '#f26', opacity: .1, render: [ 'fill_jitter', 1 ], fill_chance: 1 },
+                    { radius: [ 0, 1 ], color: '#fff', opacity: .15, render: [ 'fill_jitter', { v: 20, c: 0 } ], fill_chance: .5 },
+                    //{ radius: [ 0, 4 ], color: '#f00', opacity: .05, render_type: 'fill', fill_chance: .5 },
+                ],
+                //center: {},
+            },
+
+            allow_straggler: true,
+        },
+
+        cracks: {
+            padding: { size: .4, chance: .993 },
+            //padding_straggler: { size: 0, chance: 1 },
+
+            max_cracks: .002,
+            initial_cracks: 8,
+            crack_seeds: 4,
+
+            spawn_extra_crack_chances: [ 1 ],
+
+            straggler_chance: 0,
+
+            placed_pixels_share: .15,
+
+            density: {
+                zone_count: 20,
+                max_fill_lvl: 1,
             },
         },
     }

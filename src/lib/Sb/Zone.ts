@@ -1,3 +1,4 @@
+import type { ZoneLook } from "$lib/Looks";
 import seedrandom from "seedrandom";
 
 function zone_util( w: number, h: number, zw: number, zh: number ) {
@@ -64,401 +65,463 @@ function zone_util( w: number, h: number, zw: number, zh: number ) {
 }
 
 type Compass = [ n: 0|1, e: 0|1, s: 0|1, w: 0|1 ];
-type RenderType = "fill_jitter" | "fill" | "shoreline" | "shoreline_jitter" | "angle";
+export type RenderType = "fill_jitter" | "fill" | "shoreline" | "shoreline_jitter" | "angle";
+
+type ZoneRenderer = {
+    add( lvls: number[], x: number, y: number, compass: (lvl: number) => Compass ): void,
+    clear( lvls: number[], x: number, y: number ): void,
+    flush(): void,
+};
+
+type Path = number[];
+
+type TileRenderer = (paths: Path[], x: number, y: number, compass: () => Compass ) => void;
+type GetTileRenderer<T> = (zw: number, zh: number, rng: () => number, props?: T) => TileRenderer;
+
+const fill_renderer: GetTileRenderer<never> = (zw, zh) => {
+    return (paths, x, y) => {
+        paths.push([
+            x, y,
+            x + zw, y,
+            x + zw, y + zh,
+            x, y + zh,
+        ]);
+    };
+}
+const fill_jitter_renderer: GetTileRenderer<number|{ v: number, c: number }|{ vx: number, cx?: number, vy: number, cy?: number }> = (zw, zh, rng, props) => {
+    props = props ?? 1;
+    if (typeof props === 'number') props = { vx: props, vy: props };
+    if ('v' in props) props = {
+        vx: props.v,
+        vy: props.v,
+        cx: props.c,
+        cy: props.c,
+    }
+
+    const vx = props.vx;
+    const cx = props.cx ?? props.vx;
+    const vy = props.vy;
+    const cy = props.cy ?? props.vy;
+
+    return (paths, x, y, compass) => {
+        const zw2 = zw * .4;
+        const zh2 = zh * .4;
+
+        const p: Path = [];
+        paths.push( p );
+        const jittery = (x: number, y: number) => {
+            p.push(
+                x + (cx - 2 * rng()*vx) * zw2,
+                y + (cy - 2 * rng()*vy) * zh2,
+            );
+        }
+
+        const [ n, e, s, w ] = compass();
+
+        if (n && w) p.push( x, y );
+        else jittery( x, y );
+
+        if (n && e) p.push( x + zw, y );
+        else jittery( x + zw, y );
+
+        if (e && s) p.push( x + zw, y + zh );
+        else jittery( x + zw, y + zh );
+
+        if (s && w) p.push( x, y + zh );
+        else jittery( x, y + zh );
+    };
+}
+const shoreline_renderer: GetTileRenderer<never> = (zw, zh) => {
+    return (paths, x, y, compass) => {
+        const [ n, e, s, w ] = compass();
+        const sum = n + e + s + w;
+
+        const zw2 = zw / 2;
+        const zh2 = zh / 2;
+
+        const p: Path = [];
+        paths.push( p );
+
+        if (sum === 0) {
+            p.push( x + zw2, y );
+            p.push( x + zw, y + zh2 );
+            p.push( x + zw2, y + zh );
+            p.push( x, y + zh2 );
+        }
+        else if (sum === 1) {
+            if (n) {
+                p.push( x + zw2, y + zh * .3 );
+                p.push( x + zw, y );
+                p.push( x, y );
+            }
+            else if (e) {
+                p.push( x + zw * .7, y + zh2 );
+                p.push( x + zw, y );
+                p.push( x + zw, y + zh );
+            }
+            else if (s) {
+                p.push( x + zw2, y + zh * .7 );
+                p.push( x + zw, y + zh );
+                p.push( x, y + zh );
+            }
+            else if (w) {
+                p.push( x + zw * .3, y + zh2 );
+                p.push( x, y );
+                p.push( x, y + zh );
+            }
+        }
+        else if (sum === 2) {
+            if (n && s || e && w) {
+                p.push( x, y );
+                if (e) p.push( x + zw2, y + zh2/3 );
+                p.push( x + zw, y );
+                if (n) p.push( x + zw - zw2/3, y + zh2 );
+                p.push( x + zw, y + zh );
+                if (e) p.push( x + zw2, y + zh - zh2/3 );
+                p.push( x, y + zh );
+                if (n) p.push( x + zw2/3, y + zh2 );
+            }
+            else if (n && e) {
+                p.push( x, y );
+                p.push( x + zw, y );
+                p.push( x + zw, y + zh );
+                p.push( x + zw * .3, y + zh * .7 );
+            }
+            else if (e && s) {
+                p.push( x + zw, y );
+                p.push( x + zw, y + zh );
+                p.push( x, y + zh );
+                p.push( x + zw * .3, y + zh * .3 );
+            }
+            else if (s && w) {
+                p.push( x + zw, y + zh );
+                p.push( x, y + zh );
+                p.push( x, y );
+                p.push( x + zw * .7, y + zh * .3 );
+            }
+            else if (w && n) {
+                p.push( x, y + zh );
+                p.push( x, y );
+                p.push( x + zw, y );
+                p.push( x + zw * .7, y + zh * .7 );
+            }
+        }
+        else if (sum === 3) {
+            p.push( x, y );
+            if (!n) p.push( x + zw2, y + zh2/3 );
+            p.push( x + zw, y );
+            if (!e) p.push( x + zw - zw2/3, y + zh2 );
+            p.push( x + zw, y + zh );
+            if (!s) p.push( x + zw2, y + zh - zh2/3 );
+            p.push( x, y + zh );
+            if (!w) p.push( x + zw2/3, y + zh2 );
+        }
+        else {
+            p.push(
+                x, y,
+                x + zw, y,
+                x + zw, y + zh,
+                x, y + zh,
+            );
+        }
+    };
+}
+const shoreline_jitter_renderer: GetTileRenderer<number|{ v: number, c: number }|{ vx: number, cx?: number, vy: number, cy?: number }> = (zw, zh, rng, props) => {
+    props = props ?? 1;
+    if (typeof props === 'number') props = { vx: props, vy: props };
+    if ('v' in props) props = {
+        vx: props.v,
+        vy: props.v,
+        cx: props.c,
+        cy: props.c,
+    }
+
+    const vx = props.vx;
+    const cx = props.cx || props.vx;
+    const vy = props.vy;
+    const cy = props.cy || props.vy;
+
+    return (paths, x, y, compass) => {
+        const [ n, e, s, w ] = compass();
+        const sum = n + e + s + w;
+
+        const zw2 = zw / 2;
+        const zh2 = zh / 2;
+
+        const p: Path = [];
+        paths.push( p );
+        const jittery = (x: number, y: number, v = 1 ) => {
+            p.push(
+                x + (cx - 2 * rng()*vx) * zw2 * v,
+                y + (cy - 2 * rng()*vy) * zh2 * v,
+            );
+        }
+
+        if (sum === 0) {
+            jittery( x + zw2, y );
+            jittery( x + zw, y + zh2 );
+            jittery( x + zw2, y + zh );
+            jittery( x, y + zh2 );
+        }
+        else if (sum === 1) {
+            if (n) {
+                jittery( x + zw2, y + zh * .7 );
+                p.push( x + zw, y );
+                p.push( x, y );
+            }
+            else if (e) {
+                jittery( x + zw * .3, y + zh2 );
+                p.push( x + zw, y );
+                p.push( x + zw, y + zh );
+            }
+            else if (s) {
+                jittery( x + zw2, y + zh * .5 );
+                p.push( x + zw, y + zh );
+                p.push( x, y + zh );
+            }
+            else if (w) {
+                jittery( x + zw * .7, y + zh2 );
+                p.push( x, y );
+                p.push( x, y + zh );
+            }
+        }
+        else if (sum === 2) {
+            if (n && s) {
+                p.push( x, y );
+                p.push( x + zw, y );
+                jittery( x + zw*.75, y + zh2, .49 );
+                p.push( x + zw, y + zh );
+                p.push( x, y + zh );
+                jittery( x + zw*.25, y + zh2, .49 );
+            }
+            else if (e && w) {
+                p.push( x, y );
+                jittery( x + zw2, y + zh*.25, .49 );
+                p.push( x + zw, y );
+                p.push( x + zw, y + zh );
+                jittery( x + zw2, y + zh*.75, .49 );
+                p.push( x, y + zh );
+            }
+            else if (n && e) {
+                p.push( x, y );
+                p.push( x + zw, y );
+                p.push( x + zw, y + zh );
+                jittery( x + zw2, y + zh2, .9 );
+            }
+            else if (e && s) {
+                p.push( x + zw, y );
+                p.push( x + zw, y + zh );
+                p.push( x, y + zh );
+                jittery( x + zw2, y + zh2, .9 );
+            }
+            else if (s && w) {
+                p.push( x + zw, y + zh );
+                p.push( x, y + zh );
+                p.push( x, y );
+                jittery( x + zw2, y + zh2, .9 );
+            }
+            else if (w && n) {
+                p.push( x, y + zh );
+                p.push( x, y );
+                p.push( x + zw, y );
+                jittery( x + zw2, y + zh2, .9 );
+            }
+        }
+        else if (sum === 3) {
+            p.push( x, y );
+            if (!n) jittery( x + zw2, y + zh * .05, .9 );
+            p.push( x + zw, y );
+            if (!e) jittery( x + zw * .95, y + zh2, .9 );
+            p.push( x + zw, y + zh );
+            if (!s) jittery( x + zw2, y + zh * .95, .9 );
+            p.push( x, y + zh );
+            if (!w) jittery( x + zw * .05, y + zh2, .9 );
+        }
+        else {
+            p.push(
+                x, y,
+                x + zw, y,
+                x + zw, y + zh,
+                x, y + zh,
+            );
+        }
+    };
+}
+const angle_renderer: GetTileRenderer<never> = (zw, zh) => {
+    return (paths, x, y, compass) => {
+        const [ n, e, s, w ] = compass();
+        const sum = n + e + s + w;
+
+        const zw2 = zw / 2;
+        const zh2 = zh / 2;
+
+        const p: Path = [];
+        paths.push( p );
+
+        if (sum === 0) {
+            p.push( x + zw2, y );
+            p.push( x + zw, y + zh2 );
+            p.push( x + zw2, y + zh );
+            p.push( x, y + zh2 );
+        }
+        else if (sum === 1) {
+            if (n) {
+                p.push( x + zw * .25, y + zh * .25 );
+                p.push( x + zw * .75, y + zh * .25 );
+                p.push( x + zw, y );
+                p.push( x, y );
+            }
+            else if (e) {
+                p.push( x + zw * .75, y + zh * .25 );
+                p.push( x + zw * .75, y + zh * .75 );
+                p.push( x + zw, y + zh );
+                p.push( x + zw, y );
+            }
+            else if (s) {
+                p.push( x + zw * .25, y + zh * .75 );
+                p.push( x + zw * .75, y + zh * .75 );
+                p.push( x + zw, y + zh );
+                p.push( x, y + zh );
+            }
+            else if (w) {
+                p.push( x + zw * .25, y + zh * .25 );
+                p.push( x + zw * .25, y + zh * .75 );
+                p.push( x, y + zh );
+                p.push( x, y );
+            }
+        }
+        else if (sum === 2) {
+            if (n && s) {
+                p.push( x + zw, y );
+                p.push( x + zw * .75, y + zh * .25 );
+                p.push( x + zw * .75, y + zh * .75 );
+                p.push( x + zw, y + zh );
+                p.push( x, y + zh );
+                p.push( x + zw * .25, y + zh * .75 );
+                p.push( x + zw * .25, y + zh * .25 );
+                p.push( x, y );
+            }
+            else if (e && w) {
+                p.push( x, y );
+                p.push( x + zw * .25, y + zh * .25 );
+                p.push( x + zw * .75, y + zh * .25 );
+                p.push( x + zw, y );
+                p.push( x + zw, y + zh );
+                p.push( x + zw * .75, y + zh * .75 );
+                p.push( x + zw * .25, y + zh * .75 );
+                p.push( x, y + zh );
+            }
+            else if (n && e) {
+                p.push( x + zw * .75, y );
+                p.push( x + zw, y );
+                p.push( x + zw, y + zh * .25 );
+            }
+            else if (n && w) {
+                p.push( x, y );
+                p.push( x + zw * .25, y );
+                p.push( x, y + zh * .25 );
+            }
+            else if (s && e) {
+                p.push( x + zw, y + zh * .75 );
+                p.push( x + zw, y + zh );
+                p.push( x + zw * .75, y + zh );
+            }
+            else if (s && w) {
+                p.push( x, y + zh * .75 );
+                p.push( x + zw * .25, y + zh );
+                p.push( x, y + zh );
+            }
+        }
+        else if (sum === 3) {
+            if (!n) {
+                p.push(
+                    x, y + zh * .75,
+                    x + zw, y + zh * .75,
+                    x + zw, y + zh,
+                    x, y + zh,
+                );
+            }
+            else if (!e) {
+                p.push(
+                    x, y,
+                    x + zw * .25, y,
+                    x + zw * .25, y + zh,
+                    x, y + zh,
+                );
+            }
+            else if (!s) {
+                p.push(
+                    x, y,
+                    x + zw, y,
+                    x + zw, y + zh * .25,
+                    x, y + zh * .25,
+                );
+            }
+            else if (!w) {
+                p.push(
+                    x + zw * .75, y,
+                    x + zw, y,
+                    x + zw, y + zh,
+                    x + zw * .75, y + zh,
+                );
+            }
+        }
+        else {
+            p.push(
+                x, y,
+                x + zw, y,
+                x + zw, y + zh,
+                x, y + zh,
+            );
+        }
+    };
+}
+const tile_renderers = {
+    fill: fill_renderer,
+    fill_jitter: fill_jitter_renderer,
+
+    shoreline: shoreline_renderer,
+    shoreline_jitter: shoreline_jitter_renderer,
+
+    angle: angle_renderer,
+} as const;
+
+type TR_Key = keyof typeof tile_renderers;
+type TR_Props<T extends TR_Key> = ((typeof tile_renderers)[ T ]) extends GetTileRenderer<infer Props> ? Props : never;
+
+export type TileRendererProp = { [K in TR_Key]: K | ([TR_Props<K>] extends [never] ? never : [ K, TR_Props<K> ]) }[ TR_Key ];
+
+function get_tile_renderer( r: TileRendererProp, zw: number, zh: number, rng: () => number ): TileRenderer {
+    if (typeof r === 'string') return tile_renderers[ r ]( zw, zh, rng );
+
+    if (r[0] === 'fill_jitter') return tile_renderers[ r[0] ]( zw, zh, rng, r[1] || undefined );
+
+    return tile_renderers[ r[0] ]( zw, zh, rng, r[1] || undefined );
+}
 
 type RenderLayer = {
     ctx: CanvasRenderingContext2D,
     fill: string,
     opacity: number,
-    type: RenderType,
-    var: number,
+
+    fill_chance: number,
+    clear_chance: number,
+
+    render: TileRenderer,
 }
-
-type ZoneRenderer = {
-    add( lvls: number[], x: number, y: number, jitter: () => number, compass: (lvl: number) => Compass ): void,
-    clear( lvls: number[], x: number, y: number ): void,
-    flush(): void,
-};
-
-function zone_renderer( layers: RenderLayer[], zw: number, zh: number ): ZoneRenderer {
-    type Path = number[];
-    type RenderTypeFn = ( paths: Path[], x: number, y: number, jitter: () => number, compass: () => Compass, v: number ) => void;
-
-    const types: Record<RenderType,RenderTypeFn> = {
-        fill( paths, x, y ) {
-            paths.push([
-                x, y,
-                x + zw, y,
-                x + zw, y + zh,
-                x, y + zh,
-            ]);
-        },
-
-        fill_jitter( paths, x, y, jitter, compass, rv ) {
-            const zw2 = zw * .4;
-            const zh2 = zh * .4;
-
-            const p: Path = [];
-            paths.push( p );
-            const jittery = (x: number, y: number) => {
-                p.push(
-                    x + (1 - 2*jitter()*rv) * zw2,
-                    y + (1 - 2*jitter()*rv) * zh2,
-                );
-            }
-
-            const [ n, e, s, w ] = compass();
-
-            if (n && w) p.push( x, y );
-            else jittery( x, y );
-
-            if (n && e) p.push( x + zw, y );
-            else jittery( x + zw, y );
-
-            if (e && s) p.push( x + zw, y + zh );
-            else jittery( x + zw, y + zh );
-
-            if (s && w) p.push( x, y + zh );
-            else jittery( x, y + zh );
-        },
-
-        shoreline( paths, x, y, jitter, compass ) {
-            const [ n, e, s, w ] = compass();
-            const sum = n + e + s + w;
-
-            const zw2 = zw / 2;
-            const zh2 = zh / 2;
-
-            const p: Path = [];
-            paths.push( p );
-
-            if (sum === 0) {
-                p.push( x + zw2, y );
-                p.push( x + zw, y + zh2 );
-                p.push( x + zw2, y + zh );
-                p.push( x, y + zh2 );
-            }
-            else if (sum === 1) {
-                if (n) {
-                    p.push( x + zw2, y + zh * .3 );
-                    p.push( x + zw, y );
-                    p.push( x, y );
-                }
-                else if (e) {
-                    p.push( x + zw * .7, y + zh2 );
-                    p.push( x + zw, y );
-                    p.push( x + zw, y + zh );
-                }
-                else if (s) {
-                    p.push( x + zw2, y + zh * .7 );
-                    p.push( x + zw, y + zh );
-                    p.push( x, y + zh );
-                }
-                else if (w) {
-                    p.push( x + zw * .3, y + zh2 );
-                    p.push( x, y );
-                    p.push( x, y + zh );
-                }
-            }
-            else if (sum === 2) {
-                if (n && s || e && w) {
-                    p.push( x, y );
-                    if (e) p.push( x + zw2, y + zh2/3 );
-                    p.push( x + zw, y );
-                    if (n) p.push( x + zw - zw2/3, y + zh2 );
-                    p.push( x + zw, y + zh );
-                    if (e) p.push( x + zw2, y + zh - zh2/3 );
-                    p.push( x, y + zh );
-                    if (n) p.push( x + zw2/3, y + zh2 );
-                }
-                else if (n && e) {
-                    p.push( x, y );
-                    p.push( x + zw, y );
-                    p.push( x + zw, y + zh );
-                    p.push( x + zw * .3, y + zh * .7 );
-                }
-                else if (e && s) {
-                    p.push( x + zw, y );
-                    p.push( x + zw, y + zh );
-                    p.push( x, y + zh );
-                    p.push( x + zw * .3, y + zh * .3 );
-                }
-                else if (s && w) {
-                    p.push( x + zw, y + zh );
-                    p.push( x, y + zh );
-                    p.push( x, y );
-                    p.push( x + zw * .7, y + zh * .3 );
-                }
-                else if (w && n) {
-                    p.push( x, y + zh );
-                    p.push( x, y );
-                    p.push( x + zw, y );
-                    p.push( x + zw * .7, y + zh * .7 );
-                }
-            }
-            else if (sum === 3) {
-                p.push( x, y );
-                if (!n) p.push( x + zw2, y + zh2/3 );
-                p.push( x + zw, y );
-                if (!e) p.push( x + zw - zw2/3, y + zh2 );
-                p.push( x + zw, y + zh );
-                if (!s) p.push( x + zw2, y + zh - zh2/3 );
-                p.push( x, y + zh );
-                if (!w) p.push( x + zw2/3, y + zh2 );
-            }
-            else {
-                p.push(
-                    x, y,
-                    x + zw, y,
-                    x + zw, y + zh,
-                    x, y + zh,
-                );
-            }
-        },
-
-        shoreline_jitter( paths, x, y, jitter, compass, rv ) {
-            const [ n, e, s, w ] = compass();
-            const sum = n + e + s + w;
-
-            const zw2 = zw / 2;
-            const zh2 = zh / 2;
-
-            const p: Path = [];
-            paths.push( p );
-
-            const jittery = (x: number, y: number, v=1) => {
-                p.push(
-                    x + (1 - 2*jitter()*rv) * zw2 * v,
-                    y + (1 - 2*jitter()*rv) * zh2 * v,
-                );
-            }
-
-            if (sum === 0) {
-                jittery( x + zw2, y );
-                jittery( x + zw, y + zh2 );
-                jittery( x + zw2, y + zh );
-                jittery( x, y + zh2 );
-            }
-            else if (sum === 1) {
-                if (n) {
-                    jittery( x + zw2, y + zh * .7 );
-                    p.push( x + zw, y );
-                    p.push( x, y );
-                }
-                else if (e) {
-                    jittery( x + zw * .3, y + zh2 );
-                    p.push( x + zw, y );
-                    p.push( x + zw, y + zh );
-                }
-                else if (s) {
-                    jittery( x + zw2, y + zh * .5 );
-                    p.push( x + zw, y + zh );
-                    p.push( x, y + zh );
-                }
-                else if (w) {
-                    jittery( x + zw * .7, y + zh2 );
-                    p.push( x, y );
-                    p.push( x, y + zh );
-                }
-            }
-            else if (sum === 2) {
-                if (n && s) {
-                    p.push( x, y );
-                    p.push( x + zw, y );
-                    jittery( x + zw*.75, y + zh2, .49 );
-                    p.push( x + zw, y + zh );
-                    p.push( x, y + zh );
-                    jittery( x + zw*.25, y + zh2, .49 );
-                }
-                else if (e && w) {
-                    p.push( x, y );
-                    jittery( x + zw2, y + zh*.25, .49 );
-                    p.push( x + zw, y );
-                    p.push( x + zw, y + zh );
-                    jittery( x + zw2, y + zh*.75, .49 );
-                    p.push( x, y + zh );
-                }
-                else if (n && e) {
-                    p.push( x, y );
-                    p.push( x + zw, y );
-                    p.push( x + zw, y + zh );
-                    jittery( x + zw2, y + zh2, .9 );
-                }
-                else if (e && s) {
-                    p.push( x + zw, y );
-                    p.push( x + zw, y + zh );
-                    p.push( x, y + zh );
-                    jittery( x + zw2, y + zh2, .9 );
-                }
-                else if (s && w) {
-                    p.push( x + zw, y + zh );
-                    p.push( x, y + zh );
-                    p.push( x, y );
-                    jittery( x + zw2, y + zh2, .9 );
-                }
-                else if (w && n) {
-                    p.push( x, y + zh );
-                    p.push( x, y );
-                    p.push( x + zw, y );
-                    jittery( x + zw2, y + zh2, .9 );
-                }
-            }
-            else if (sum === 3) {
-                p.push( x, y );
-                if (!n) jittery( x + zw2, y + zh * .05, .9 );
-                p.push( x + zw, y );
-                if (!e) jittery( x + zw * .95, y + zh2, .9 );
-                p.push( x + zw, y + zh );
-                if (!s) jittery( x + zw2, y + zh * .95, .9 );
-                p.push( x, y + zh );
-                if (!w) jittery( x + zw * .05, y + zh2, .9 );
-            }
-            else {
-                p.push(
-                    x, y,
-                    x + zw, y,
-                    x + zw, y + zh,
-                    x, y + zh,
-                );
-            }
-        },
-
-        angle( paths, x, y, jitter, compass ) {
-            const [ n, e, s, w ] = compass();
-            const sum = n + e + s + w;
-
-            const zw2 = zw / 2;
-            const zh2 = zh / 2;
-
-            const p: Path = [];
-            paths.push( p );
-
-            if (sum === 0) {
-                p.push( x + zw2, y );
-                p.push( x + zw, y + zh2 );
-                p.push( x + zw2, y + zh );
-                p.push( x, y + zh2 );
-            }
-            else if (sum === 1) {
-                if (n) {
-                    p.push( x + zw * .25, y + zh * .25 );
-                    p.push( x + zw * .75, y + zh * .25 );
-                    p.push( x + zw, y );
-                    p.push( x, y );
-                }
-                else if (e) {
-                    p.push( x + zw * .75, y + zh * .25 );
-                    p.push( x + zw * .75, y + zh * .75 );
-                    p.push( x + zw, y + zh );
-                    p.push( x + zw, y );
-                }
-                else if (s) {
-                    p.push( x + zw * .25, y + zh * .75 );
-                    p.push( x + zw * .75, y + zh * .75 );
-                    p.push( x + zw, y + zh );
-                    p.push( x, y + zh );
-                }
-                else if (w) {
-                    p.push( x + zw * .25, y + zh * .25 );
-                    p.push( x + zw * .25, y + zh * .75 );
-                    p.push( x, y + zh );
-                    p.push( x, y );
-                }
-            }
-            else if (sum === 2) {
-                if (n && s) {
-                    p.push( x + zw, y );
-                    p.push( x + zw * .75, y + zh * .25 );
-                    p.push( x + zw * .75, y + zh * .75 );
-                    p.push( x + zw, y + zh );
-                    p.push( x, y + zh );
-                    p.push( x + zw * .25, y + zh * .75 );
-                    p.push( x + zw * .25, y + zh * .25 );
-                    p.push( x, y );
-                }
-                else if (e && w) {
-                    p.push( x, y );
-                    p.push( x + zw * .25, y + zh * .25 );
-                    p.push( x + zw * .75, y + zh * .25 );
-                    p.push( x + zw, y );
-                    p.push( x + zw, y + zh );
-                    p.push( x + zw * .75, y + zh * .75 );
-                    p.push( x + zw * .25, y + zh * .75 );
-                    p.push( x, y + zh );
-                }
-                else if (n && e) {
-                    p.push( x + zw * .75, y );
-                    p.push( x + zw, y );
-                    p.push( x + zw, y + zh * .25 );
-                }
-                else if (n && w) {
-                    p.push( x, y );
-                    p.push( x + zw * .25, y );
-                    p.push( x, y + zh * .25 );
-                }
-                else if (s && e) {
-                    p.push( x + zw, y + zh * .75 );
-                    p.push( x + zw, y + zh );
-                    p.push( x + zw * .75, y + zh );
-                }
-                else if (s && w) {
-                    p.push( x, y + zh * .75 );
-                    p.push( x + zw * .25, y + zh );
-                    p.push( x, y + zh );
-                }
-            }
-            else if (sum === 3) {
-                if (!n) {
-                    p.push(
-                        x, y + zh * .75,
-                        x + zw, y + zh * .75,
-                        x + zw, y + zh,
-                        x, y + zh,
-                    );
-                }
-                else if (!e) {
-                    p.push(
-                        x, y,
-                        x + zw * .25, y,
-                        x + zw * .25, y + zh,
-                        x, y + zh,
-                    );
-                }
-                else if (!s) {
-                    p.push(
-                        x, y,
-                        x + zw, y,
-                        x + zw, y + zh * .25,
-                        x, y + zh * .25,
-                    );
-                }
-                else if (!w) {
-                    p.push(
-                        x + zw * .75, y,
-                        x + zw, y,
-                        x + zw, y + zh,
-                        x + zw * .75, y + zh,
-                    );
-                }
-            }
-            else {
-                p.push(
-                    x, y,
-                    x + zw, y,
-                    x + zw, y + zh,
-                    x, y + zh,
-                );
-            }
-        },
-    };
+function zone_renderer( layers: RenderLayer[], zw: number, zh: number, rng: () => number ): ZoneRenderer {
 
     const lvl_paths = new Map<number,Path[]>();
 
     return {
-        add( lvls, x, y, jitter, compass ) {
+        add( lvls, x, y, compass ) {
             for (const lvl of lvls) {
                 const layer = layers[ lvl ];
                 if (!layer) continue;
+
+                if (layer.fill_chance < 1) {
+                    if (rng() > layer.fill_chance) continue;
+                }
 
                 let paths = lvl_paths.get( lvl );
                 if (!paths) {
@@ -466,15 +529,18 @@ function zone_renderer( layers: RenderLayer[], zw: number, zh: number ): ZoneRen
                     lvl_paths.set( lvl, paths );
                 }
 
-                types[ layer.type ]( paths, x, y, jitter, () => compass( lvl ), layer.var );
+                layer.render( paths, x, y, () => compass( lvl ) );
             }
         },
         clear( lvls, x, y ) {
-            const t0 = performance.now();
-
             for (const lvl of lvls) {
                 const layer = layers[ lvl ];
-                if (layer) layer.ctx.clearRect( x, y, zw, zh );
+                if (layer) {
+                    if (layer.clear_chance < 1) {
+                        if (rng() > layer.clear_chance) continue;
+                    }
+                    layer.ctx.clearRect( x, y, zw, zh );
+                }
             }
         },
         flush() {
@@ -502,32 +568,6 @@ function zone_renderer( layers: RenderLayer[], zw: number, zh: number ): ZoneRen
 }
 
 
-export type ZoneLayers = {
-    outside?: {
-        color?: string,
-        opacity?: number,
-        render_type?: RenderType,
-        render_var?: number,
-
-        radius: [ number, number ],
-    }[],
-    center?: {
-        color?: string,
-        opacity?: number,
-        render_type?: RenderType,
-        render_var?: number,
-    },
-    inside?: {
-        color?: string,
-        opacity?: number,
-        render_type?: RenderType,
-        render_var?: number,
-
-        // walk_circle with this radius, the tile counts as "inside" if all walked tiles are of lvl "center" or "inside"
-        radius: number,
-    },
-}
-
 type ZoneItem = {
     x: number,
     y: number,
@@ -543,19 +583,6 @@ type ZoneItem = {
         s: Set<number>,
         w: Set<number>,
     };
-}
-
-export type ZoneLook = {
-    zone_count: number,
-
-    layers: ZoneLayers,
-
-    allow_straggler?: boolean | {
-        empty?: boolean,
-        outside_lvls?: boolean | Set<number>,
-        center?: boolean,
-        inside?: boolean,
-    },
 }
 
 type ZoneCfg = {
@@ -674,36 +701,79 @@ export class Zone {
         this.#allow_straggler = cfg.look.allow_straggler ?? { empty: true };
 
         const render_layers: RenderLayer[] = [];
-        const add_render_layer = (i: number, fill: string, opacity: number, render_type: RenderType|undefined, render_var: number|undefined) => {
+        type RenderLayerProps = {
+            i: number,
+            fill: string,
+            opacity: number,
+
+            render?: TileRendererProp,
+
+            fill_chance: number|undefined,
+            clear_chance: number|undefined,
+        }
+        const add_render_layer = (props: RenderLayerProps) => {
             const canvas = document.createElement( 'canvas' );
             canvas.width = this.#w;
             canvas.height = this.#h;
 
             this.canvases.push( canvas );
 
-            render_layers[ i ] = {
+            render_layers[ props.i ] = {
                 ctx: canvas.getContext( '2d' )!,
-                fill,
-                opacity,
-                type: render_type || 'fill',
-                var: render_var ?? 1,
+                fill: props.fill,
+                opacity: props.opacity,
+
+                fill_chance: Math.max( 0, Math.min( props.fill_chance ?? 1, 1 ) ),
+                clear_chance: Math.max( 0, Math.min( props.clear_chance ?? 1, 1 ) ),
+
+                render: get_tile_renderer( props.render || 'fill', zs, zs, this.#rng ),
             };
         }
 
         if (cfg.look.layers.outside) for (let i=0; i<cfg.look.layers.outside.length; i++) {
             const l = cfg.look.layers.outside[ i ];
-            if (l.color) add_render_layer( i+1, l.color, l.opacity || 1, l.render_type, l.render_var );
+            if (l.color) add_render_layer({
+                i: i+1,
+
+                render: l.render,
+
+                fill: l.color,
+                opacity: l.opacity || 1,
+
+                fill_chance: l.fill_chance,
+                clear_chance: l.clear_chance,
+            });
         }
         if (cfg.look.layers.center && cfg.look.layers.center.color) {
             const l = cfg.look.layers.center;
-            add_render_layer( this.#center_lvl_index, l.color!, l.opacity || 1, l.render_type, l.render_var );
+            add_render_layer({
+                i: this.#center_lvl_index,
+
+                render: l.render,
+
+                fill: l.color!,
+                opacity: l.opacity || 1,
+
+                fill_chance: l.fill_chance,
+                clear_chance: l.clear_chance,
+            });
         }
         if (cfg.look.layers.inside && cfg.look.layers.inside.color && cfg.look.layers.inside.radius) {
             const l = cfg.look.layers.inside;
-            add_render_layer( this.#inside_lvl_index, l.color!, l.opacity || 1, l.render_type, l.render_var );
+            add_render_layer({
+                i: this.#inside_lvl_index,
+
+                render: l.render,
+
+                fill: l.color!,
+                opacity: l.opacity || 1,
+
+                fill_chance: l.fill_chance,
+                clear_chance: l.clear_chance,
+            });
         }
 
-        this.#renderer = zone_renderer( render_layers, zs, zs );
+        this.#renderer = zone_renderer( render_layers, zs, zs, this.#rng );
     }
 
     add_pixel( x: number, y: number ) {
@@ -765,7 +835,6 @@ export class Zone {
     }
 
     render() {
-        const rng = this.#rng;
         const zd = this.#zone_data;
         const center_lvl_index = this.#center_lvl_index;
 
@@ -891,7 +960,7 @@ export class Zone {
                 z.compass.s.has( lvl ) ? 1 : 0,
                 z.compass.w.has( lvl ) ? 1 : 0,
             ];
-            this.#renderer.add( lvls, z.x, z.y, rng, get_compass );
+            this.#renderer.add( lvls, z.x, z.y, get_compass );
         }
 
         this.#renderer.flush();

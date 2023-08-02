@@ -6,6 +6,7 @@
     import Menu from '$lib/Menu.svelte';
     import { Looks } from '$lib/Looks';
     import { persisted } from 'svelte-local-storage-store'
+    import { dev } from '$app/environment';
 
     let show_substrate = false;
 
@@ -41,7 +42,6 @@
     $: $cfg, reset();
 
     async function toggle() {
-        console.log( state.done );
         if (show_substrate && playpause && !state.done) {
             playpause();
         }
@@ -64,7 +64,7 @@
     let playpause: () => Promise<void>;
     let download: (name: string) => void;
 
-    let init = false;
+    let init = dev;
     onMount(() => {
         show_substrate = false;
 
@@ -73,9 +73,9 @@
         else if (dpr >= 1.3) $cfg.supersample = 1.5;
         else $cfg.supersample = 1;
 
-        console.log( $cfg.seed );
+        //console.log( $cfg.seed );
 
-        setTimeout(() => {
+        if (!dev) setTimeout(() => {
             init = true;
         }, 300 );
     });
