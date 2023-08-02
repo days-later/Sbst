@@ -10,6 +10,7 @@ type SWEvent = Event & {
 const worker = (self as unknown) as any;
 
 const FILES = `static${version}`;
+const NETWORK = `network${version}`;
 
 const excludeAssets: string[] = [];
 const excludeAssetDirs: string[] = [];
@@ -48,6 +49,21 @@ async function cacheResponse( request: Request ): Promise<Response> {
     return cached || await fetch( request );
 }
 
+async function cachedNetworkResponse( request: Request ): Promise<Response> {
+    try {
+        const response = await fetch( request );
+        const cache = await caches.open( NETWORK );
+        cache.put( request, response.clone() );
+        return response;
+    }
+    catch ( e ) {
+        const cache = await caches.open( NETWORK );
+        const response = await cache.match( request );
+        if (response) return response;
+        throw e;
+    }
+}
+
 worker.addEventListener('fetch', (event: SWEvent) => {
     if (event.request.method !== 'GET' || event.request.headers.has('range')) return;
 
@@ -66,6 +82,6 @@ worker.addEventListener('fetch', (event: SWEvent) => {
         event.respondWith( cacheResponse( event.request ) );
     }
     else {
-        event.respondWith( fetch( event.request ).catch( () => cacheResponse( event.request ) ) );
+        event.respondWith( cachedNetworkResponse( event.request ) );
     }
 });
