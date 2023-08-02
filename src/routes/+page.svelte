@@ -10,6 +10,8 @@
 
     let show_substrate = false;
 
+    // hi :)
+
     const cfg = persisted( 'sb-app-cfg', {
         seed: '12',
         supersample: 1,
