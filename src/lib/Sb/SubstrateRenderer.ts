@@ -52,6 +52,7 @@ export class SubstrateRenderer {
         this.canvas.width = cfg.w;
         this.canvas.height = cfg.h;
         this.#ctx = this.canvas.getContext( '2d' )!;
+        this.#ctx.lineCap = 'square';
 
         const short_side = Math.min( cfg.w, cfg.w )
         this.#highlight_min_length = this.#highlight_min_length_adjust * short_side;

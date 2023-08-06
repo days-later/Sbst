@@ -1,4 +1,4 @@
-import type { RenderType, TileRendererProp } from "./Sb/Zone"
+import type { TileRendererProp } from "./Sb/Zone"
 
 
 export type CracksLook = {
@@ -9,6 +9,9 @@ export type CracksLook = {
     initial_cracks: number,
     crack_seeds: number,
     spawn_extra_crack_chances: number[], // [ chance of an extra crack, chance of an extra crack, ... ]
+
+    angel_jitter?: [ number, number ]
+    seed_angel?: [ number, number ]
 
     straggler_chance: number,
 
@@ -376,10 +379,12 @@ Looks[ 4 ] = {
             padding_straggler: { size: 0, chance: 1 },
 
             max_cracks: .002,
-            initial_cracks: 8,
-            crack_seeds: 4,
+            initial_cracks: 4,
+            crack_seeds: 8,
 
             spawn_extra_crack_chances: [ 1, .2 ],
+
+            angel_jitter: [ -1, 1 ],
 
             straggler_chance: 1,
 
@@ -448,6 +453,63 @@ Looks[ 5 ] = {
             density: {
                 zone_count: 20,
                 max_fill_lvl: 1,
+            },
+        },
+    }
+}
+
+
+Looks[ 6 ] = {
+    name: 'crx',
+
+    ui_theme: {
+        bg: '#2af',
+        fg: '#fff',
+        pg: '#f26'
+    },
+
+    look: {
+        lines: {
+            bg: '#2af',
+            line: { style: '#f26', opacity: 1, width: 1, chance: 1 },
+            road: { style: '#fff', opacity: 1, width: 5, chance: 0 },
+            straggler: { style: '#fff', opacity: 1, width: 1, chance: 1 },
+        },
+
+        zone: {
+            zone_count: 100,
+
+            layers: {
+                outside: [
+                    { radius: [ 0, 1 ], color: '#fff', opacity: 1, render: [ 'fill_jitter', 8 ] },
+                ],
+                //center: {},
+            },
+
+            allow_straggler: true,
+        },
+
+        cracks: {
+            padding: { size: 0, chance: 0 },
+            padding_straggler: { size: 0, chance: 1 },
+
+            max_cracks: .002,
+            initial_cracks: 1,
+            crack_seeds: 1,
+            seed_angel: [ 60, 60 ],
+
+            spawn_extra_crack_chances: [ 1, 1, 1, 1 ],
+
+            angel_jitter: [ -30, 30 ],
+
+
+            straggler_chance: 1,
+
+            placed_pixels_share: .1,
+
+            density: {
+                zone_count: 100,
+                max_fill_lvl: 0.6,
             },
         },
     }

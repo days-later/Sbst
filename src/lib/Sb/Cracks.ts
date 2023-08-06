@@ -198,6 +198,8 @@ export class Cracks {
 
     #max_find_origin_attempts = 0;
 
+    #angle_jitter: [ number, number ];
+
     straggle_time = false;
     done = false;
 
@@ -219,6 +221,8 @@ export class Cracks {
         this.#max_cracks = Math.ceil( mc < 1 ? (cfg.w * cfg.h * mc) : mc );
         this.#straggler_chance = cfg.look.straggler_chance;
         this.#spawn_extra_chances = cfg.look.spawn_extra_crack_chances;
+
+        this.#angle_jitter = look.angel_jitter ?? [ -2, 2.1 ];
 
         this.#angles = [];
 
@@ -243,7 +247,7 @@ export class Cracks {
 
         const seeds: { x: number, y: number, angle: number }[] = [];
         for (let i=0; i<look.crack_seeds; i++) {
-            const seed = { x: this.#random_x(), y: this.#random_y(), angle: rng.float( 0, 360 ) }
+            const seed = { x: this.#random_x(), y: this.#random_y(), angle: look.seed_angel ? rng.float( look.seed_angel[0], look.seed_angel[1] ) : rng.float( 0, 360 ) }
             seeds.push( seed );
         }
 
@@ -315,7 +319,7 @@ export class Cracks {
         origin = origin || this.#findOrigin( this.#max_find_origin_attempts );
         if (!origin) return false;
 
-        const angle_adjust = (this.#rng.test() ? 90 : -90) + this.#rng.float( -2, 2.1 )
+        const angle_adjust = (this.#rng.test() ? 90 : -90) + this.#rng.float( this.#angle_jitter[0], this.#angle_jitter[1] );
         origin.angle = normalizeDegrees( origin.angle + angle_adjust );
 
         const c = new Crack( origin );
