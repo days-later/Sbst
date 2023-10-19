@@ -89,21 +89,15 @@ export class SubstrateRenderer {
             }
         }
 
-        let next_zone_render = 0;
-        function set_next_zone_render() {
-            if (next_zone_render < 6_000) next_zone_render += 1000;
-            else if (next_zone_render < 20_000) next_zone_render += 2000;
-            else if (next_zone_render < 30_000) next_zone_render += 5000;
-            else if (next_zone_render < 50_000) next_zone_render += 10_000;
-            else next_zone_render += 50_000;
-        }
-
         let straggle_time = false;
         const step = () => {
             lines = [];
 
             ctx.beginPath();
-            for (let i=0; i<8; i++) cracks.step( crackStep );
+            for (let i=0; i<cracks.steps_per_frame; i++) {
+                cracks.step( crackStep );
+                if (cracks.done) break;
+            }
 
             let skip = false;
 
@@ -143,18 +137,6 @@ export class SubstrateRenderer {
                 }
             }
 
-            if (0) {
-                if (!this.#cracks.straggle_time) {
-                    if (this.#cracks.placed_pixels > next_zone_render) {
-                        this.#zones.render();
-                        set_next_zone_render();
-                    }
-                }
-                else if (!straggle_time) {
-                    straggle_time = true;
-                    this.#zones.render();
-                }
-            }
             this.#zones.render();
 
             this.on_frame();
@@ -162,7 +144,6 @@ export class SubstrateRenderer {
             if (!straggle_time && this.#cracks.straggle_time) straggle_time = true;
 
             if (!cracks.done) {
-                //this.nextFrame = setTimeout(() => {}, 50 );
                 this.#next_frame = requestAnimationFrame( step );
             }
             else {

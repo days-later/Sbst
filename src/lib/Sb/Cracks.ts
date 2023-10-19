@@ -26,25 +26,43 @@ function create_padding_test( w: number, h: number, pad: number, p?: () => boole
     }
 }
 
-function density_zones( w: number, h: number, zw: number, zh: number, max: number ) {
+function density_zones( w: number, h: number, zw: number, zh: number, max: number, max_filled_zones: number ) {
     zw = Math.round( zw );
     zh = Math.round( zh );
 
     if (zw < 2 || zh < 2) throw "invalid density zone: zone size too small";
     if (max <= 0) throw "zone density: invalid max";
 
-    const offset_x = Math.round( Math.floor( (w % zw) / 2 ) );
-    const offset_y = Math.round( Math.floor( (h % zh) / 2 ) );
+    const zcx = Math.ceil( w / zw );
+    const zcy = Math.ceil( h / zh );
+
+    const tx = (zw - (zcx * zw - w)) / zw;
+    const ty = (zh - (zcy * zh - h)) / zh;
 
     const get_zone_coords = (x: number, y: number) => {
-        return [
-            Math.floor( (x - offset_x) / zw ),
-            Math.floor( (y - offset_y) / zh ),
+        const zc = [
+            Math.floor( x / zw ),
+            Math.floor( y / zh ),
+            max,
         ];
+
+        if (zc[0] === zcx-1) zc[2] *= tx;
+        if (zc[1] === zcy-1) zc[2] *= ty;
+
+        zc[2] = Math.round( zc[2] )
+
+        return zc;
     }
 
-    max = max < 1 ? (zw * zh * max) : max;
+    max = Math.round( max < 1 ? (zw * zh * max) : max );
+
     const data: number[][] = [];
+
+    let filled = 0;
+    const zone_count = zcx * zcy;
+
+    if (max_filled_zones <= 1) max_filled_zones = Math.round( max_filled_zones * zone_count );
+    if (max_filled_zones <= 0) throw "zone density: invalid max_filled_zones";
 
     return {
         add: ( x: number, y: number ) => {
@@ -52,6 +70,9 @@ function density_zones( w: number, h: number, zw: number, zh: number, max: numbe
             let r = data[ zc[1] ];
             if (r) {
                 const v = r[ zc[0] ];
+
+                if (v+1 === zc[2]) filled++;
+
                 if (v) r[ zc[0] ] = v + 1;
                 else r[ zc[0] ] = 1;
             }
@@ -64,12 +85,23 @@ function density_zones( w: number, h: number, zw: number, zh: number, max: numbe
         allow: ( x: number, y: number ) => {
             const zc = get_zone_coords( x, y );
             const r = data[ zc[1] ];
-            if (!r) return true;
+
+            if (!r) {
+                if (filled >= max_filled_zones) return false;
+                return true;
+            }
 
             const v = r[ zc[0] ];
-            if (!v) return true;
+            if (!v) {
+                if (filled >= max_filled_zones) return false;
+                return true;
+            }
 
-            return v < max;
+            return v < zc[2];
+        },
+        fill_ratio() {
+            if (filled >= max_filled_zones) console.log({ filled, max_filled_zones, zone_count,  });
+            return filled / max_filled_zones;
         },
     };
 }
@@ -194,12 +226,17 @@ export class Cracks {
     #random_x: () => number;
     #random_y: () => number;
 
-    #density: undefined | { add: ( x: number, y: number ) => void, allow: ( x: number, y: number ) => boolean };
+    #density: undefined | { add: ( x: number, y: number ) => void, allow: ( x: number, y: number ) => boolean, fill_ratio: () => number };
 
     #max_find_origin_attempts = 0;
 
     #angle_jitter: [ number, number ];
 
+    #crack_seed_angle: [ number, number ];
+    #reseeds_remaining: number;
+    #reseeds_seed_count: number;
+
+    steps_per_frame: number;
     straggle_time = false;
     done = false;
 
@@ -211,11 +248,14 @@ export class Cracks {
 
         this.#pixel_count_total = cfg.w * cfg.h;
         this.#placed_pixels_max = Math.min( this.#pixel_count_total, Math.floor( this.#pixel_count_total * look.placed_pixels_share ) );
+        this.#max_find_origin_attempts = Math.max( 0, this.#pixel_count_total * .5 );
 
         if (look.density && look.density.zone_count>0 && look.density.max_fill_lvl>0) {
-            const zs = Math.max( 2, Math.ceil( Math.max( cfg.w, cfg.h ) / look.density.zone_count ) );
-            this.#density = density_zones( cfg.w, cfg.h, zs, zs, look.density.max_fill_lvl );
+            const zs = Math.max( 4, Math.ceil( Math.max( cfg.w, cfg.h ) / look.density.zone_count ) );
+            this.#density = density_zones( cfg.w, cfg.h, zs, zs, look.density.max_fill_lvl, look.density.max_filled_zones || 1 );
         }
+
+        this.steps_per_frame = look.steps_per_frame || 8;
 
         const mc = look.max_cracks;
         this.#max_cracks = Math.ceil( mc < 1 ? (cfg.w * cfg.h * mc) : mc );
@@ -223,6 +263,9 @@ export class Cracks {
         this.#spawn_extra_chances = cfg.look.spawn_extra_crack_chances;
 
         this.#angle_jitter = look.angel_jitter ?? [ -2, 2.1 ];
+
+        this.#reseeds_remaining = look.reseed?.max_attempts || 0;
+        this.#reseeds_seed_count = look.reseed?.seed_count || look.initial_cracks;
 
         this.#angles = [];
 
@@ -245,20 +288,30 @@ export class Cracks {
         this.#random_x = rng.int( bounds[ 0 ], bounds[ 1 ] );
         this.#random_y = rng.int( bounds[ 2 ], bounds[ 3 ] );
 
+        this.#crack_seed_angle = look.seed_angle ?? [ 0, 360 ];
+        this.#seed( look.crack_seeds, look.initial_cracks );
+    }
+
+    #seed( seed_count: number, crack_count: number,  ) {
         const seeds: { x: number, y: number, angle: number }[] = [];
-        for (let i=0; i<look.crack_seeds; i++) {
-            const seed = { x: this.#random_x(), y: this.#random_y(), angle: look.seed_angel ? rng.float( look.seed_angel[0], look.seed_angel[1] ) : rng.float( 0, 360 ) }
-            seeds.push( seed );
+        let n = 0;
+        while (true) {
+            const angle = this.#rng.float( this.#crack_seed_angle[0], this.#crack_seed_angle[1] );
+            const seed = { x: this.#random_x(), y: this.#random_y(), angle };
+
+            const exists = this.#get_angle_at( seed.x, seed.y );
+            if (!exists) {
+                seeds.push( seed );
+                if (seeds.length >= seed_count) break;
+            }
+
+            n++;
+            if (n >= this.#max_find_origin_attempts) break;
         }
 
-        this.#max_find_origin_attempts = Math.max( 0, this.#pixel_count_total * .5 );
-
-        if (seeds.length) {
-            const seed_index = rng.int( 0, seeds.length-1 );
-            for (let i=0; i<look.initial_cracks; i++) {
-                const seed = seeds[ seed_index() ];
-                this.#add_crack( seed );
-            }
+        for (let i=0; i < Math.min( crack_count, seeds.length ); i++) {
+            const seed = seeds[ i ];
+            this.#add_crack( seed );
         }
     }
 
@@ -283,7 +336,7 @@ export class Cracks {
         let r = this.#angles[ y ];
         if (!r || !r[ x ]) {
             this.#placed_pixels++;
-            if (!this.straggle_time && this.#density) {
+            if (!this.straggle_time) {
                 if (this.#density) this.#density.add( x, y );
                 this.#zones.add_pixel( x, y );
             }
@@ -327,27 +380,29 @@ export class Cracks {
         return true;
     }
 
-    #is_valid_crack_pos( crack: Crack ): boolean {
+    #is_valid_crack_pos( crack: Crack ): true | string {
         const x = crack.int_pos[ 0 ];
         const y = crack.int_pos[ 1 ];
 
         if (x === crack.origin[ 0 ] && y === crack.origin[ 1 ]) return true;
 
         if (this.straggle_time) {
-            if (!this.#in_padded_bounds_straggler( x, y )) return false;
+            if (!this.#in_padded_bounds_straggler( x, y )) return 'oob-straggler';
         }
         else {
-            if (!this.#in_padded_bounds( x, y )) return false;
+            if (!this.#in_padded_bounds( x, y )) return 'oob';
         }
 
-        //if (this.#density && !this.#density.allow( x, y )) return false;
+        if (this.#density && !this.#density.allow( x, y )) return 'density';
 
-        return this.#get_angle_at( x, y ) === undefined;
+        return this.#get_angle_at( x, y ) === undefined ? true : 'occupied';
     }
 
+    crack_done_reasons = new Map<string,number>();
     step( on_step: (crack: Crack, isDone: boolean) => void ) {
         if (this.straggle_time === false && this.#placed_pixels >= this.#placed_pixels_max) {
             this.straggle_time = true;
+            //console.log( 'straggle-time :)' );
 
             if (this.#straggler_chance <= 0) {
                 for (const crack of this.#cracks) {
@@ -369,7 +424,8 @@ export class Cracks {
         for (const crack of this.#cracks) {
             crack.step();
 
-            if (this.#is_valid_crack_pos( crack )) {
+            const ivc = this.#is_valid_crack_pos( crack );
+            if (ivc === true) {
                 done = false;
                 this.#set_angle_at( crack.int_pos[0], crack.int_pos[1], crack.angle );
 
@@ -378,6 +434,7 @@ export class Cracks {
                 }
             }
             else {
+                this.crack_done_reasons.set( ivc, (this.crack_done_reasons.get( ivc ) || 0) + 1 );
                 this.#cracks.delete( crack );
                 if (crack.steps > 1) {
                     on_step( crack, true );
@@ -389,6 +446,32 @@ export class Cracks {
                 }
             }
         }
+
+        let done_reason = done ? 'cracks-done' : '';
+
+        const zones_filled = this.#density?.fill_ratio() ?? 0;
+        if (zones_filled >= 1) {
+            if (!done) done_reason = 'zones-filled';
+            done = true;
+        }
+
+        if (zones_filled<1 && this.#cracks.size===0 && this.#placed_pixels < this.#placed_pixels_max && this.#reseeds_remaining) {
+            this.#reseeds_remaining--;
+            this.#seed( this.#reseeds_seed_count, this.#reseeds_seed_count );
+
+            done = this.#cracks.size === 0;
+            if (done) done_reason = 'reseed-failed';
+        }
+
         this.done = done;
+        if (done) {
+            console.log({
+                placed_pixels_ratio: this.#placed_pixels / this.#placed_pixels_max,
+                zones_filled,
+                done_reason,
+            });
+            console.log( this.crack_done_reasons );
+        }
     }
+
 }

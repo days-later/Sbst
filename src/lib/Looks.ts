@@ -11,15 +11,23 @@ export type CracksLook = {
     spawn_extra_crack_chances: number[], // [ chance of an extra crack, chance of an extra crack, ... ]
 
     angel_jitter?: [ number, number ]
-    seed_angel?: [ number, number ]
+    seed_angle?: [ number, number ]
 
     straggler_chance: number,
 
     placed_pixels_share: number,
 
+    steps_per_frame?: number,
+
+    reseed?: {
+        max_attempts: number,
+        seed_count: number,
+    },
+
     density?: {
         zone_count: number,
         max_fill_lvl: number,
+        max_filled_zones?: number,
     },
 }
 
@@ -300,7 +308,7 @@ Looks[ 3 ] = {
             bg: '#fffede',
             line: { style: '#daffc7', opacity: 1, width: 1, chance: 0 },
             road: { style: '#f0f', opacity: 1, width: 1, chance: 0 },
-            straggler: { style: '#000', opacity: .1, width: 1, chance: .7 },
+            straggler: { style: '#000', opacity: .4, width: 1, chance: .7 },
         },
 
         zone: {
@@ -448,12 +456,7 @@ Looks[ 5 ] = {
 
             straggler_chance: 0,
 
-            placed_pixels_share: .15,
-
-            density: {
-                zone_count: 20,
-                max_fill_lvl: 1,
-            },
+            placed_pixels_share: .1,
         },
     }
 }
@@ -471,7 +474,7 @@ Looks[ 6 ] = {
     look: {
         lines: {
             bg: '#2af',
-            line: { style: '#f26', opacity: 1, width: 1, chance: 1 },
+            line: { style: '#f26', opacity: 1, width: 1, chance: 0 },
             road: { style: '#fff', opacity: 1, width: 5, chance: 0 },
             straggler: { style: '#fff', opacity: 1, width: 1, chance: 1 },
         },
@@ -496,7 +499,7 @@ Looks[ 6 ] = {
             max_cracks: .002,
             initial_cracks: 1,
             crack_seeds: 1,
-            seed_angel: [ 60, 60 ],
+            seed_angle: [ 60, 60 ],
 
             spawn_extra_crack_chances: [ 1, 1, 1, 1 ],
 
@@ -506,10 +509,70 @@ Looks[ 6 ] = {
             straggler_chance: 1,
 
             placed_pixels_share: .1,
+        },
+    }
+}
+
+
+Looks[ 7 ] = {
+    name: 'tenna',
+
+    ui_theme: {
+        bg: '#fffeeb',
+        fg: '#ff7575',
+        pg: '#000'
+    },
+
+    look: {
+        lines: {
+            bg: '#fffeeb',
+            line: { style: '#e3e1a1', opacity: 1, width: 1, chance: .35 },
+            road: { style: '#000', opacity: 1, width: 1, chance: 0 },
+            straggler: { style: '#ff7575', opacity: 1, width: 4, chance: 1 },
+        },
+
+        zone: {
+            zone_count: 160,
+
+            layers: {
+                outside: [
+                    { radius: [ 11, 14 ], color: '#e3e1a1', opacity: .08, render: "shoreline_jitter" },
+                    { radius: [ 0, 12 ], color: '#e3e1a1', opacity: 1, render: "shoreline_jitter" },
+                    { radius: [ 1, 4 ], color: '#ff7575', opacity: .12, render: "shoreline_jitter" },
+                    { radius: [ 0, 2 ], color: '#ff7575', opacity: 1, render: "shoreline" },
+                ],
+                center: { color: '#ff7575', render: "shoreline" },
+            },
+
+            allow_straggler: { empty: true },
+        },
+
+        cracks: {
+            padding: { size: .15, chance: 0 },
+            padding_straggler: { size: 0, chance: 1 },
+
+            max_cracks: .002,
+            initial_cracks: 2,
+            crack_seeds: 2,
+            seed_angle: [ 60, 60 ],
+            reseed: { seed_count: 2, max_attempts: 12 },
+
+            spawn_extra_crack_chances: [ 1, 1, 1, 1 ],
+
+            angel_jitter: [ 0, 0 ],
+
+
+            straggler_chance: .25,
+
+            placed_pixels_share: .04,
+
+            steps_per_frame: 8,
+
 
             density: {
                 zone_count: 100,
-                max_fill_lvl: 0.6,
+                max_fill_lvl: .4,
+                //max_filled_zones: .1,
             },
         },
     }

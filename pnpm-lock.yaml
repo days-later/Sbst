@@ -11,9 +11,9 @@ dependencies:
   seedrandom:
     specifier: ^3.0.5
     version: 3.0.5
-  svelte-local-storage-store:
-    specifier: ^0.5.0
-    version: 0.5.0(svelte@4.1.2)
+  svelte-persisted-store:
+    specifier: ^0.7.0
+    version: 0.7.0(svelte@4.1.2)
 
 devDependencies:
   '@sveltejs/kit':
@@ -886,11 +886,11 @@ packages:
     dependencies:
       svelte: 4.1.2
 
-  /svelte-local-storage-store@0.5.0(svelte@4.1.2):
-    resolution: {integrity: sha512-SEDrpapeia6fUqta+r1NvSLlJYPkZ4pBcl15EYIOSPNzy6vhpoXu8cnzUDmZxsWl7fZGAHxrVH9UyZCbyO4W+g==}
+  /svelte-persisted-store@0.7.0(svelte@4.1.2):
+    resolution: {integrity: sha512-PczYS60ysScQ0DmTCPXQm5rwt8FfQzSlx0lCbljbE6hTCKqXaw2bP8KH1+B7QTPmuiy/QbAk4pjYpNCmZhjyRw==}
     engines: {node: '>=0.14'}
     peerDependencies:
-      svelte: ^3.48.0 || ^4.0.0
+      svelte: ^3.48.0 || >4.0.0
     dependencies:
       svelte: 4.1.2
     dev: false

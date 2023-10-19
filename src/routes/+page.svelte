@@ -5,7 +5,7 @@
     import Progress from '$lib/Progress.svelte';
     import Menu from '$lib/Menu.svelte';
     import { Looks } from '$lib/Looks';
-    import { persisted } from 'svelte-local-storage-store'
+    import { persisted } from 'svelte-persisted-store'
     import { dev } from '$app/environment';
 
     let show_substrate = false;

@@ -18,7 +18,8 @@
 <script lang="ts">
     import { createEventDispatcher, onMount, tick } from "svelte";
     import { downloadCanvas } from "./downloadCanvas";
-    import { Sb, type SbLook } from "./Sb/Sb";
+    import { Sb } from "./Sb/Sb";
+    import type { SbLook } from "./Looks";
 
     const dispatch = createEventDispatcher<{ init: null, progress: ProgressEvent }>();
 
