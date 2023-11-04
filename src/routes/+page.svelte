@@ -103,7 +103,6 @@
     </div>
 
     <Progress
-        {ui}
         v={state.progress}
         started={state.started}
         active={state.playing}
