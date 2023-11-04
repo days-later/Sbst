@@ -360,7 +360,7 @@ Looks[ 4 ] = {
     ui_theme: {
         bg: '#fff',
         fg: '#777',
-        pg: '#000'
+        pg: '#ddd'
     },
 
     look: {
@@ -468,7 +468,7 @@ Looks[ 6 ] = {
     ui_theme: {
         bg: '#2af',
         fg: '#fff',
-        pg: '#f26'
+        pg: '#fff'
     },
 
     look: {
@@ -520,7 +520,7 @@ Looks[ 7 ] = {
     ui_theme: {
         bg: '#fffeeb',
         fg: '#ff7575',
-        pg: '#000'
+        pg: '#ff7575'
     },
 
     look: {

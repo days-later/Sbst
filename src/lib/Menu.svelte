@@ -15,7 +15,7 @@
 </script>
 
 <div class="menu" style:--fg={ui.fg} style:--bg={ui.bg}>
-    <button on:click={() => dispatch( 'toggle' )}>
+    <button class="play-pause" on:click={() => dispatch( 'toggle' )}>
         {#if playing}
             <svg viewBox="0 -960 960 960"><path d="M559.5-252v-456h138v456h-138Zm-296 0v-456h139v456h-139Z"/></svg>
         {:else}
@@ -29,7 +29,7 @@
         {/each}
     </select>
 
-    <select bind:value={supersample} disabled={playing}>
+    <select class="res" bind:value={supersample} disabled={playing}>
         <option value={.25}>x.25</option>
         <option value={.5}>x.5</option>
         <option value={1}>x1</option>
@@ -37,7 +37,7 @@
         <option value={4}>x4</option>
     </select>
 
-    <button disabled={!started || playing} on:click={() => dispatch( 'download' )}>
+    <button class="download" disabled={!started || playing} on:click={() => dispatch( 'download' )}>
         <svg viewBox="0 0 20 16" style="transform: scale(.4)">
             <path d="M0 0 L20 0 L10 12 Z" />
             <rect x=0 y=14 width=100% height=4 />
@@ -52,7 +52,7 @@
         flex: 0 0 auto;
 
         display: flex;
-        flex-flow: row wrap;
+        flex-flow: row nowrap;
         align-items: stretch;
         gap: 8px;
 
@@ -79,7 +79,7 @@
         height: calc( var(--a) * 1.5 );
 
         margin: 0;
-        padding: 0 1em;
+        padding: 0;
 
         color: inherit;
         background: inherit;
@@ -139,14 +139,27 @@
 
     @media (max-width: 600px) {
         button, select {
-            flex: 0 0 calc( 50% - 4px );
-            width: calc( 50% - 4px );
-            height: calc( var(--a) * 1.2 );
-            line-height: 1;
+            height: calc( var(--a) * 1 );
+            line-height: 1.2;
             font-size: 40px;
+
+            background: rgba(0,0,0,0.04);
+            border-radius: 8px;
+        }
+
+        .play-pause {
+            flex: 0 0 20%;
         }
         .look {
-            font-size: 32px;
+            flex: 1 1 auto;
+            font-size: 22px;
+        }
+        .res {
+            flex: 0 0 15%;
+            font-size: 22px;
+        }
+        .download {
+            flex: 0 0 20%;
         }
     }
 
