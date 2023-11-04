@@ -1,8 +1,4 @@
 <script lang="ts">
-    import type { LookOption } from "./Looks";
-
-    export let ui: LookOption["ui_theme"];
-
     export let v: number;
     export let started: boolean;
     export let active: boolean;
@@ -10,7 +6,7 @@
 
 </script>
 
-<div class="progress" class:started class:active class:done style:--fg={ui.pg || ui.fg} style:--bg={ui.bg}>
+<div class="progress" class:started class:active class:done>
     <div style="width: {Math.min( 1, Math.max( 0, v ) )*100}%"></div>
 </div>
 
@@ -24,7 +20,7 @@
         max-width: 100%;
         height: 100%;
         transition: background-color 300ms;
-        background: var(--fg);
+        background: var(--pg);
     }
     .progress.done > div {
         display: none;

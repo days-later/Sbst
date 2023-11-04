@@ -86,7 +86,7 @@
     });
 </script>
 
-<main class:init style:--bg={ui.bg}>
+<main class:init style:--fg={ui.fg} style:--bg={ui.bg} style:--pg={ui.pg || ui.fg}>
     <div class=sbst>
         {#if show_substrate}
             <CSubstrate
@@ -111,8 +111,6 @@
     />
 
     <Menu
-        {ui}
-
         bind:li={$cfg.li}
         bind:supersample={$cfg.supersample}
 
@@ -124,12 +122,6 @@
         on:download={file_download}
     />
 </main>
-
-<svg>
-    <filter id="set-color" color-interpolation-filters="sRGB" x="0" y="0" height="100%" width="100%">
-        <feColorMatrix type="matrix" values="0 0 0 0 .1  0 0 0 0 .3  0 0 0 0 .9  0 0 0 1 0"/>
-    </filter>
-</svg>
 
 <div class="overlay" class:hidden={!overlay}>
     <span class="s1">{overlay}</span>

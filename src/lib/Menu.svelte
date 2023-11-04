@@ -4,8 +4,6 @@
 
     const dispatch = createEventDispatcher<{ toggle: null, pause: null, download: null }>();
 
-    export let ui: LookOption["ui_theme"];
-
     export let li: number;
     export let supersample: number;
 
@@ -14,7 +12,7 @@
 
 </script>
 
-<div class="menu" style:--fg={ui.fg} style:--bg={ui.bg}>
+<div class="menu">
     <button class="play-pause" on:click={() => dispatch( 'toggle' )}>
         {#if playing}
             <svg viewBox="0 -960 960 960"><path d="M559.5-252v-456h138v456h-138Zm-296 0v-456h139v456h-139Z"/></svg>
