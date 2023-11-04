@@ -248,7 +248,7 @@ Looks[ 2 ] = {
             bg: '#222',
             line: { style: '#222', opacity: .75, width: 1, chance: 0.8 },
             road: { style: '#f5f0b3', opacity: 1, width: 4, chance: .6 },
-            straggler: { style: '#f5f0b3', opacity: .1, width: 1 },
+            straggler: { style: '#f5f0b3', opacity: .25, width: 1 },
         },
 
         zone: {

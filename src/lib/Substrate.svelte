@@ -8,9 +8,6 @@
         active_cracks: number,
         max_cracks: number,
 
-        width: number,
-        height: number,
-
         runtime: number,
     };
 
@@ -28,8 +25,6 @@
     export let look: SbLook;
 
     let el: HTMLElement;
-    let width = 0;
-    let height = 0;
     let sb: Sb | null = null;
 
     function emit() {
@@ -43,16 +38,13 @@
             active_cracks: sb.active_cracks,
             max_cracks: sb.max_cracks,
 
-            width,
-            height,
-
             runtime: sb.runtime,
         });
     }
 
     function setup() {
-        const w = Math.max( 4, el.clientWidth * supersample );
-        const h = Math.max( 4, el.clientHeight * supersample );
+        const w = Math.max( 4, window.screen.width * window.devicePixelRatio * supersample );
+        const h = Math.max( 4, window.screen.height * window.devicePixelRatio * supersample );
 
         sb = new Sb({
             seed,
@@ -70,11 +62,6 @@
 
     export async function playpause(): Promise<void> {
         if (!sb) {
-            width = el.clientWidth;
-            height = el.clientHeight;
-            document.documentElement.style.setProperty( '--scale', (1 / supersample) + '' );
-            await tick();
-
             setup();
             emit();
             await tick();
@@ -106,7 +93,9 @@
 </script>
 
 
-<div class="substrate" bind:this={el} />
+<div class="substrate" bind:this={el}>
+    {#if sb}<span>{sb.width}&times;{sb.height}</span>{/if}
+</div>
 
 
 <style>
@@ -124,8 +113,19 @@
         bottom: 0;
         left: 0;
 
-        transform-origin: 0 0;
-        transform: scale( var(--scale) );
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+    span {
+        position: absolute;
+        z-index: 1;
+        right: 8px;
+        bottom: 8px;
+
+        color: rgba(0,0,0,0.5);
+        font-size: 10px;
     }
 
 </style>

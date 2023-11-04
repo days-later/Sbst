@@ -25,7 +25,13 @@ export class Sb {
     #progress = 0;
     #runtime = { acc: 0, t0: 0 };
 
+    readonly width: number;
+    readonly height: number;
+
     constructor( cfg: SbCfg ) {
+        this.width = cfg.w;
+        this.height = cfg.h;
+
         this.#zones = new Zone({
             seed: cfg.seed,
             w: cfg.w,

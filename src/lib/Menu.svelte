@@ -23,23 +23,25 @@
         {/if}
     </button>
 
-    <select bind:value={li} disabled={playing}>
+    <select class="look" bind:value={li} disabled={playing}>
         {#each Looks as l, i}
             <option value={i}>{l.name}</option>
         {/each}
     </select>
 
     <select bind:value={supersample} disabled={playing}>
-        <option value={.25}>25%</option>
-        <option value={.5}>50%</option>
-        <option value={1}>100%</option>
-        <option value={1.5}>150%</option>
-        <option value={2}>200%</option>
-        <option value={5}>500%</option>
+        <option value={.25}>x.25</option>
+        <option value={.5}>x.5</option>
+        <option value={1}>x1</option>
+        <option value={2}>x2</option>
+        <option value={4}>x4</option>
     </select>
 
     <button disabled={!started || playing} on:click={() => dispatch( 'download' )}>
-        <svg viewBox="0 -960 960 960"><path d="M480-340 358.5-462.5l16-15 95 94V-748h22v364.5l95-94 16 15L480-340ZM212-212v-151.5h22V-234h492v-129.5h22V-212H212Z"/></svg>
+        <svg viewBox="0 0 20 16" style="transform: scale(.4)">
+            <path d="M0 0 L20 0 L10 12 Z" />
+            <rect x=0 y=14 width=100% height=4 />
+        </svg>
     </button>
 </div>
 
@@ -52,8 +54,12 @@
         display: flex;
         flex-flow: row wrap;
         align-items: stretch;
+        gap: 8px;
 
-        font-size: max( 48px, 5vmin );
+        padding: 8px;
+
+        --a: max( 48px, 5vmin );
+        font-size: var(--a);
 
         color: var(--fg);
         background: var(--bg);
@@ -70,7 +76,7 @@
         align-items: center;
 
         min-width: 0;
-        height: 1.5em;
+        height: calc( var(--a) * 1.5 );
 
         margin: 0;
         padding: 0 1em;
@@ -95,7 +101,7 @@
         flex: 1 1 auto;
         min-width: 0;
         max-width: 60%;
-        height: 1.5em;
+        height: calc( var(--a) * 1.5 );
 
         appearance: none;
         margin: 0;
@@ -116,7 +122,8 @@
     button:not( :disabled ):hover,
     select:not( :disabled ):hover {
         cursor: pointer;
-        transform: translateY( 1px );
+        z-index: 1;
+        box-shadow: inset 0 0 0 4px var(--fg), 4px 4px 0 0 rgba(0,0,0,.8);
     }
 
     button:disabled,
@@ -128,6 +135,16 @@
     select:focus-visible {
         outline: none;
         box-shadow: inset 0 0 0 4px var(--fg);
+    }
+
+    @media (max-width: 600px) {
+        button, select {
+            flex: 0 0 calc( 50% - 4px );
+            width: calc( 50% - 4px );
+        }
+        .look {
+            font-size: 32px;
+        }
     }
 
 
