@@ -141,6 +141,9 @@
         button, select {
             flex: 0 0 calc( 50% - 4px );
             width: calc( 50% - 4px );
+            height: calc( var(--a) * 1.2 );
+            line-height: 1;
+            font-size: 40px;
         }
         .look {
             font-size: 32px;

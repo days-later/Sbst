@@ -124,7 +124,7 @@
         right: 8px;
         bottom: 8px;
 
-        color: rgba(0,0,0,0.5);
+        color: rgba(0,0,0,0.3);
         font-size: 10px;
     }
 
