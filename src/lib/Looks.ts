@@ -88,7 +88,8 @@ export type LookOption = {
     ui_theme: {
         bg: string,
         fg: string,
-        pg?: string
+        pg?: string,
+        theme?: string,
     },
     look: SbLook
 }
@@ -101,6 +102,7 @@ Looks[ 0 ] = {
     ui_theme: {
         bg: '#fff',
         fg: '#000',
+        theme: '#b5e5ff',
     },
 
     look: {
@@ -301,6 +303,7 @@ Looks[ 3 ] = {
         bg: '#fffede',
         fg: '#777',
         pg: '#777',
+        theme: '#fffede',
     },
 
     look: {
@@ -468,7 +471,8 @@ Looks[ 6 ] = {
     ui_theme: {
         bg: '#2af',
         fg: '#fff',
-        pg: '#fff'
+        pg: '#fff',
+        theme: '#2af',
     },
 
     look: {

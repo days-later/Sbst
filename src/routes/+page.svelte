@@ -19,6 +19,13 @@
 
     $: lo = Looks[ $cfg.li ];
 
+    function update_theme_color( color: string ) {
+        if (!color) return;
+        const meta_el = document.getElementById( 'meta-theme-color' );
+        if (meta_el) meta_el.setAttribute( 'content', color );
+    }
+    $: update_theme_color( lo.ui_theme.theme || lo.ui_theme.fg );
+
     const initstate: ProgressEvent = {
         started: false,
         playing: false,
