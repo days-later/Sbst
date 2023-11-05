@@ -183,7 +183,7 @@
         flex-flow: row nowrap;
         align-items: stretch;
 
-        gap: 8px;
+        gap: 16px;
     }
     .info > div {
         height: 16px;
@@ -194,10 +194,13 @@
     }
     .info .res {
         flex: 0 0 auto;
-        padding: 0 16px;
+        margin-right: 16px;
 
         color: var(--ui--btn-fg);
+        background: transparent;
+
         font-size: 10px;
+        opacity: .5;
     }
     .info .progress {
         flex: 1 1 auto;
@@ -270,10 +273,6 @@
     @media (max-width: 640px) {
         main {
             padding: 8px;
-        }
-
-        .info .res {
-            padding: 0 8px;
         }
     }
 

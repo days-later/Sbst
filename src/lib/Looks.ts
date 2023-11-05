@@ -242,7 +242,7 @@ Looks[ 2 ] = {
 
     ui_theme: {
         bg: '#222',
-        btn_bg: '#000',
+        btn_bg: '#222',
         btn_fg: '#f5f0b3',
     },
 
@@ -302,7 +302,7 @@ Looks[ 3 ] = {
 
     ui_theme: {
         bg: '#fffede',
-        btn_bg: '#fffede',
+        btn_bg: '#00000004',
         btn_fg: '#777',
     },
 
