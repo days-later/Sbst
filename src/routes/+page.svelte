@@ -5,7 +5,7 @@
     import Menu from '$lib/Menu.svelte';
     import { Looks } from '$lib/Looks';
     import { persisted } from 'svelte-persisted-store'
-    import { dev } from '$app/environment';
+    import { browser, dev } from '$app/environment';
 
     let show_substrate = false;
 
@@ -20,7 +20,7 @@
     $: lo = Looks[ $cfg.li ];
 
     function update_theme_color( color: string ) {
-        if (!color) return;
+        if (!color || !browser) return;
         const meta_el = document.getElementById( 'meta-theme-color' );
         if (meta_el) meta_el.setAttribute( 'content', color );
     }
