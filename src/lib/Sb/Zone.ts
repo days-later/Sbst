@@ -797,7 +797,11 @@ export class Zone {
 
         const id = this.#get_zone_id( x, y );
         const zc = this.#get_zone_coords( id );
-        const z = this.#zone_data[ zc[1] ][ zc[0] ];
+
+        const row = this.#zone_data[ zc[1] ];
+        if (!row) return false;
+
+        const z = row[ zc[0] ];
 
         if (as.center && z.center) return true;
         if (as.inside && z.inside) return true;

@@ -4,6 +4,9 @@
         playing: boolean,
         done: boolean,
 
+        width: number,
+        height: number,
+
         progress: number,
         active_cracks: number,
         max_cracks: number,
@@ -34,6 +37,9 @@
             playing: sb.is_running,
             done: sb.done,
             progress: sb.progress,
+
+            width: sb.width,
+            height: sb.height,
 
             active_cracks: sb.active_cracks,
             max_cracks: sb.max_cracks,
@@ -93,9 +99,7 @@
 </script>
 
 
-<div class="substrate" bind:this={el}>
-    {#if sb}<span>{sb.width}&times;{sb.height}</span>{/if}
-</div>
+<div class="substrate" bind:this={el} />
 
 
 <style>
@@ -103,6 +107,8 @@
         position: relative;
         width: 100%;
         height: 100%;
+
+        background: var( --canvas-bg );
         overflow: hidden;
     }
 
@@ -116,17 +122,6 @@
         width: 100%;
         height: 100%;
         object-fit: contain;
-    }
-
-    span {
-        position: absolute;
-        z-index: 1;
-        right: 8px;
-        bottom: 8px;
-
-        color: var(--fg);
-        opacity: .3;
-        font-size: 10px;
     }
 
 </style>

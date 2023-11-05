@@ -2,7 +2,6 @@
     import CSubstrate from '$lib/Substrate.svelte';
     import type { ProgressEvent } from '$lib/Substrate.svelte';
     import { onMount, tick } from 'svelte';
-    import Progress from '$lib/Progress.svelte';
     import Menu from '$lib/Menu.svelte';
     import { Looks } from '$lib/Looks';
     import { persisted } from 'svelte-persisted-store'
@@ -19,12 +18,14 @@
     });
 
     $: lo = Looks[ $cfg.li ];
-    $: ui = Looks[ $cfg.li ].ui_theme;
 
     const initstate: ProgressEvent = {
         started: false,
         playing: false,
         done: false,
+
+        width: 0,
+        height: 0,
 
         progress: 0,
         active_cracks: 0,
@@ -40,7 +41,12 @@
     }
     $: $cfg, reset();
 
+    let before_start = false;
     async function toggle() {
+        before_start = true;
+        await tick();
+        before_start = false;
+
         if (show_substrate && playpause && !state.done) {
             playpause();
         }
@@ -86,7 +92,16 @@
     });
 </script>
 
-<main class:init style:--fg={ui.fg} style:--bg={ui.bg} style:--pg={ui.pg || ui.fg}>
+<main
+    class:init
+    class:empty={!state.width && !state.height}
+    class:before-start={before_start}
+
+    style:--fg={lo.ui_theme.fg}
+    style:--bg={lo.ui_theme.bg}
+    style:--pg={lo.ui_theme.pg || lo.ui_theme.fg}
+    style:--canvas-bg={lo.look.lines.bg}
+>
     <div class=sbst>
         {#if show_substrate}
             <CSubstrate
@@ -97,17 +112,10 @@
                 bind:playpause
                 bind:download
 
-                on:progress={e => state = e.detail }
+                on:progress={e => state = e.detail}
             />
         {/if}
     </div>
-
-    <Progress
-        v={state.progress}
-        started={state.started}
-        active={state.playing}
-        done={state.done}
-    />
 
     <Menu
         bind:li={$cfg.li}
@@ -120,6 +128,15 @@
         on:pause={pause}
         on:download={file_download}
     />
+
+    <div class="info">
+        <div class="progress" class:done={state.done}>
+            <div style="width: {Math.min( 1, Math.max( 0, state.progress ) )*100}%"></div>
+        </div>
+
+        <div class=res>{state.width}&times;{state.height}</div>
+    </div>
+
 </main>
 
 <div class="overlay" class:hidden={!overlay}>
@@ -131,28 +148,67 @@
 <style>
     main {
         position: fixed;
-        top: 0;
-        right: 0;
-        left: 0;
-        bottom: 0;
+        inset: 0;
 
         display: flex;
         flex-flow: column nowrap;
         align-items: stretch;
 
-        background: var( --bg, #000 );
-        overflow: hidden;
+        padding: 32px;
+        gap: 8px;
 
+        background: var(--bg);
         transition: opacity 600ms;
     }
     main:not( .init ) {
         opacity: 0;
     }
 
-    main > div {
+    .sbst {
         flex: 1 1 auto;
-        width: 100%;
+
+        border-radius: 8px;
         overflow: hidden;
+    }
+
+    .info {
+        display: flex;
+        flex-flow: row nowrap;
+        align-items: stretch;
+
+        gap: 8px;
+    }
+    .info > div {
+        height: 16px;
+        line-height: 16px;
+
+        background: rgba(0,0,0,0.04);
+        border-radius: 8px;
+    }
+    .info .res {
+        flex: 0 0 auto;
+        padding: 0 16px;
+
+        color: var(--fg);
+        font-size: 10px;
+    }
+    .info .progress {
+        flex: 1 1 auto;
+        overflow: hidden;
+        transition: opacity 600ms;
+    }
+    .info .progress.done {
+        background: var(--pg);
+        opacity: .1;
+    }
+    .info .progress > div {
+        max-width: 100%;
+        height: 100%;
+        transition: background-color 300ms;
+        background: var(--pg);
+        border-radius: 8px;
+
+        box-shadow: 0 0 0 4px var(--bg);
     }
 
     .overlay {
@@ -200,6 +256,12 @@
         pointer-events: none;
     }
 
+
+    @media (max-width: 640px) {
+        main {
+            padding: 8px;
+        }
+    }
 
 
 

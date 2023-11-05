@@ -1,6 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher } from 'svelte';
-    import { Looks, type LookOption } from './Looks';
+    import { Looks } from './Looks';
 
     const dispatch = createEventDispatcher<{ toggle: null, pause: null, download: null }>();
 
@@ -54,40 +54,58 @@
         align-items: stretch;
         gap: 8px;
 
-        padding: 8px;
-
         --a: max( 48px, 5vmin );
-        font-size: var(--a);
-
-        color: var(--fg);
-        background: var(--bg);
-
-        overflow: hidden;
     }
 
-    button {
+    button,
+    select {
         flex: 1 1 auto;
 
-        display: flex;
-        flex-flow: row nowrap;
-        justify-content: center;
-        align-items: center;
-
+        appearance: none;
         min-width: 0;
+        max-width: 60%;
         height: calc( var(--a) * 1.5 );
+
+        color: var(--fg);
+        accent-color: var(--fg);
+        border-radius: 8px;
 
         margin: 0;
         padding: 0;
 
-        color: inherit;
-        background: inherit;
+        background: rgba(0,0,0,0.04);
+
         border: 0;
-        font-family: inherit;
-        font-size: inherit;
+        font-size: var(--a);
         line-height: 1.5;
         text-align: center;
-
+        font-family: inherit;
         overflow: hidden;
+    }
+
+    button:not( :disabled ):hover,
+    button:not( :disabled ):focus-visible,
+    select:not( :disabled ):hover,
+    select:not( :disabled ):focus-visible {
+        outline: none;
+        cursor: pointer;
+        z-index: 1;
+
+        box-shadow: inset 0 0 0 4px var(--fg);
+    }
+    select:focus {
+        background: var(--bg);
+    }
+    button:disabled,
+    select:disabled {
+        opacity: 0.25;
+    }
+
+    button {
+        display: flex;
+        flex-flow: row nowrap;
+        justify-content: center;
+        align-items: center;
     }
     svg {
         height: 1em;
@@ -95,54 +113,12 @@
         fill: currentColor;
     }
 
-    select {
-        flex: 1 1 auto;
-        min-width: 0;
-        max-width: 60%;
-        height: calc( var(--a) * 1.5 );
-
-        appearance: none;
-        margin: 0;
-        padding: 0;
-
-        color: inherit;
-        background: inherit;
-
-        border: 0;
-        font-family: inherit;
-        font-size: inherit;
-        line-height: 1.5;
-        text-align: center;
-
-        overflow: hidden;
-    }
-
-    button:not( :disabled ):hover,
-    select:not( :disabled ):hover {
-        cursor: pointer;
-        z-index: 1;
-        box-shadow: inset 0 0 0 4px var(--fg), 4px 4px 0 0 rgba(0,0,0,.8);
-    }
-
-    button:disabled,
-    select:disabled {
-        opacity: .3;
-    }
-
-    button:focus-visible,
-    select:focus-visible {
-        outline: none;
-        box-shadow: inset 0 0 0 4px var(--fg);
-    }
 
     @media (max-width: 600px) {
         button, select {
             height: calc( var(--a) * 1 );
             line-height: 1.2;
             font-size: 40px;
-
-            background: rgba(0,0,0,0.04);
-            border-radius: 8px;
         }
 
         .play-pause {
