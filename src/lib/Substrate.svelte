@@ -108,7 +108,7 @@
         width: 100%;
         height: 100%;
 
-        background: var( --canvas-bg );
+        background: var(--canvas-bg);
         overflow: hidden;
     }
 

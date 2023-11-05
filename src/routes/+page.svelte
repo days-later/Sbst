@@ -24,7 +24,7 @@
         const meta_el = document.getElementById( 'meta-theme-color' );
         if (meta_el) meta_el.setAttribute( 'content', color );
     }
-    $: update_theme_color( lo.ui_theme.theme || lo.ui_theme.fg );
+    $: update_theme_color( lo.ui_theme.bg );
 
     const initstate: ProgressEvent = {
         started: false,
@@ -104,9 +104,9 @@
     class:empty={!state.width && !state.height}
     class:before-start={before_start}
 
-    style:--fg={lo.ui_theme.fg}
-    style:--bg={lo.ui_theme.bg}
-    style:--pg={lo.ui_theme.pg || lo.ui_theme.fg}
+    style:--ui--bg={lo.ui_theme.bg}
+    style:--ui--btn-bg={lo.ui_theme.btn_bg}
+    style:--ui--btn-fg={lo.ui_theme.btn_fg}
     style:--canvas-bg={lo.look.lines.bg}
 >
     <div class=sbst>
@@ -137,11 +137,11 @@
     />
 
     <div class="info">
-        <div class="progress" class:done={state.done}>
+        <div class="progress" class:started={state.started} class:done={state.done}>
             <div style="width: {Math.min( 1, Math.max( 0, state.progress ) )*100}%"></div>
         </div>
 
-        <div class=res>{state.width}&times;{state.height}</div>
+        <div class=res>{state.width&&state.height ? `${state.width}x${state.height}` : ''}</div>
     </div>
 
 </main>
@@ -164,7 +164,7 @@
         padding: 32px;
         gap: 8px;
 
-        background: var(--bg);
+        background: var(--ui--bg);
         transition: opacity 600ms;
     }
     main:not( .init ) {
@@ -189,14 +189,14 @@
         height: 16px;
         line-height: 16px;
 
-        background: rgba(0,0,0,0.04);
+        background: var(--ui--btn-bg);
         border-radius: 8px;
     }
     .info .res {
         flex: 0 0 auto;
         padding: 0 16px;
 
-        color: var(--fg);
+        color: var(--ui--btn-fg);
         font-size: 10px;
     }
     .info .progress {
@@ -205,17 +205,20 @@
         transition: opacity 600ms;
     }
     .info .progress.done {
-        background: var(--pg);
+        background: var(--ui--btn-fg);
         opacity: .1;
     }
     .info .progress > div {
         max-width: 100%;
         height: 100%;
         transition: background-color 300ms;
-        background: var(--pg);
+        background: var(--ui--btn-fg);
         border-radius: 8px;
 
-        box-shadow: 0 0 0 4px var(--bg);
+        box-shadow: 0 0 0 4px var(--ui--bg);
+    }
+    .info .progress:not( .started ) > div {
+        opacity: 0;
     }
 
     .overlay {
@@ -267,6 +270,10 @@
     @media (max-width: 640px) {
         main {
             padding: 8px;
+        }
+
+        .info .res {
+            padding: 0 8px;
         }
     }
 

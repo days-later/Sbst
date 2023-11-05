@@ -66,14 +66,12 @@
         max-width: 60%;
         height: calc( var(--a) * 1.5 );
 
-        color: var(--fg);
-        accent-color: var(--fg);
-        border-radius: 8px;
-
         margin: 0;
         padding: 0;
 
-        background: rgba(0,0,0,0.04);
+        color: var(--ui--btn-fg);
+        border-radius: 8px;
+        background: var(--ui--btn-bg);
 
         border: 0;
         font-size: var(--a);
@@ -91,11 +89,9 @@
         cursor: pointer;
         z-index: 1;
 
-        box-shadow: inset 0 0 0 4px var(--fg);
+        box-shadow: inset 0 0 0 4px var(--ui--btn-fg);
     }
-    select:focus {
-        background: var(--bg);
-    }
+
     button:disabled,
     select:disabled {
         opacity: 0.25;
@@ -117,7 +113,6 @@
     @media (max-width: 600px) {
         button, select {
             height: calc( var(--a) * 1 );
-            line-height: 1.2;
             font-size: 40px;
         }
 

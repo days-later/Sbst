@@ -87,9 +87,8 @@ export type LookOption = {
     name: string,
     ui_theme: {
         bg: string,
-        fg: string,
-        pg?: string,
-        theme?: string,
+        btn_bg: string,
+        btn_fg: string,
     },
     look: SbLook
 }
@@ -101,8 +100,8 @@ Looks[ 0 ] = {
 
     ui_theme: {
         bg: '#fff',
-        fg: '#000',
-        theme: '#b5e5ff',
+        btn_bg: '#f8f8f8',
+        btn_fg: '#000',
     },
 
     look: {
@@ -178,7 +177,8 @@ Looks[ 1 ] = {
 
     ui_theme: {
         bg: '#fff',
-        fg: '#f52cee',
+        btn_bg: '#f8f8f8',
+        btn_fg: '#f52cee',
     },
 
     look: {
@@ -242,7 +242,8 @@ Looks[ 2 ] = {
 
     ui_theme: {
         bg: '#222',
-        fg: '#f5f0b3',
+        btn_bg: '#000',
+        btn_fg: '#f5f0b3',
     },
 
     look: {
@@ -301,9 +302,8 @@ Looks[ 3 ] = {
 
     ui_theme: {
         bg: '#fffede',
-        fg: '#777',
-        pg: '#777',
-        theme: '#fffede',
+        btn_bg: '#fffede',
+        btn_fg: '#777',
     },
 
     look: {
@@ -362,8 +362,8 @@ Looks[ 4 ] = {
 
     ui_theme: {
         bg: '#fff',
-        fg: '#777',
-        pg: '#ddd'
+        btn_bg: '#f8f8f8',
+        btn_fg: '#777',
     },
 
     look: {
@@ -415,8 +415,8 @@ Looks[ 5 ] = {
 
     ui_theme: {
         bg: '#fff',
-        fg: '#f26',
-        pg: '#f26'
+        btn_bg: '#f8f8f8',
+        btn_fg: '#f26',
     },
 
     look: {
@@ -470,9 +470,8 @@ Looks[ 6 ] = {
 
     ui_theme: {
         bg: '#2af',
-        fg: '#fff',
-        pg: '#fff',
-        theme: '#2af',
+        btn_bg: '#2af',
+        btn_fg: '#fff',
     },
 
     look: {
@@ -523,8 +522,8 @@ Looks[ 7 ] = {
 
     ui_theme: {
         bg: '#fffeeb',
-        fg: '#ff7575',
-        pg: '#ff7575'
+        btn_bg: '#fffeeb',
+        btn_fg: '#ff7575',
     },
 
     look: {
