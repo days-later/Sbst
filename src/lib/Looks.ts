@@ -101,7 +101,7 @@ Looks[ 0 ] = {
     ui_theme: {
         bg: '#fff',
         btn_bg: '#f8f8f8',
-        btn_fg: '#000',
+        btn_fg: '#b5e5ff',
     },
 
     look: {
