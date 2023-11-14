@@ -3,6 +3,8 @@ import type { Cracks, ICrack } from "./Cracks";
 import type { Zone } from "./Zone";
 import type { LinesLook } from "$lib/Looks";
 
+type Point = [ x: number, y: number ];
+type Line = [ Point, Point ];
 
 type RendererCfg = {
     seed: string,

@@ -13,26 +13,21 @@
 
         runtime: number,
     };
-
 </script>
 <script lang="ts">
-    import { createEventDispatcher, onMount, tick } from "svelte";
+    import { onMount, tick } from "svelte";
     import { downloadCanvas } from "./downloadCanvas";
     import { Sb } from "./Sb/Sb";
-    import type { SbLook } from "./Looks";
+    import { cfg } from "./cfg-store.svelte";
 
-    const dispatch = createEventDispatcher<{ init: null, progress: ProgressEvent }>();
-
-    export let seed: string;
-    export let supersample = 1;
-    export let look: SbLook;
+    const { onprogress } = $props<{ onprogress: (e: ProgressEvent) => void; }>();
 
     let el: HTMLElement;
     let sb: Sb | null = null;
 
     function emit() {
         if (!sb) return;
-        dispatch( 'progress', {
+        onprogress({
             started: sb.started,
             playing: sb.is_running,
             done: sb.done,
@@ -49,18 +44,18 @@
     }
 
     function setup() {
-        const w = Math.max( 4, window.screen.width * window.devicePixelRatio * supersample );
-        const h = Math.max( 4, window.screen.height * window.devicePixelRatio * supersample );
+        const w = Math.max( 4, window.screen.width * window.devicePixelRatio * cfg.supersample );
+        const h = Math.max( 4, window.screen.height * window.devicePixelRatio * cfg.supersample );
 
         sb = new Sb({
-            seed,
+            seed: cfg.seed,
             w,
             h,
 
             on_frame: emit,
             on_done: emit,
 
-            look,
+            look: cfg.look.look,
         });
 
         for (const c of sb.canvases) el.appendChild( c );
@@ -71,11 +66,6 @@
             setup();
             emit();
             await tick();
-        }
-
-        if (!init) {
-            init = true;
-            dispatch( 'init' );
         }
 
         if (!sb) return;
@@ -91,10 +81,9 @@
     }
     export function download( name: string ) {
         if (!sb) return;
-        downloadCanvas( sb.canvases, `sb-${name}-${seed}` );
+        downloadCanvas( sb.canvases, `sb-${name}-${cfg.seed}` );
     }
 
-    let init = false;
     onMount(() => playpause());
 </script>
 

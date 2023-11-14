@@ -7,6 +7,9 @@ const config = {
 	kit: {
 		adapter: static_adapter(),
 	},
+	compilerOptions: {
+		runes: true,
+	},
 };
 
 export default config;

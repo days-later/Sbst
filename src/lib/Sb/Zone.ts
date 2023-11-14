@@ -24,7 +24,7 @@ function zone_util( w: number, h: number, zw: number, zh: number ) {
         },
 
         get_zone_coords( id: number ): [ number, number ] {
-            let y = Math.floor( id / cols );
+            const y = Math.floor( id / cols );
             return [ id - (y * cols), y ];
         },
 
@@ -544,7 +544,7 @@ function zone_renderer( layers: RenderLayer[], zw: number, zh: number, rng: () =
             }
         },
         flush() {
-            let lvl: number, paths: Path[], layer: RenderLayer, path: Path, point: Point, i: number;
+            let lvl: number, paths: Path[], layer: RenderLayer, path: Path, i: number;
 
             for ([ lvl, paths ] of lvl_paths) {
                 layer = layers[ lvl ];
@@ -957,7 +957,7 @@ export class Zone {
             add_to_render_adjacent( z, lvls );
         }
 
-        for (let [ z, lvls ] of to_render) {
+        for (const [ z, lvls ] of to_render) {
             const get_compass = (lvl: number): Compass => [
                 z.compass.n.has( lvl ) ? 1 : 0,
                 z.compass.e.has( lvl ) ? 1 : 0,
@@ -968,7 +968,7 @@ export class Zone {
         }
 
         this.#renderer.flush();
-        for (let [ z, lvls ] of to_clear) this.#renderer.clear( lvls, z.x, z.y );
+        for (const [ z, lvls ] of to_clear) this.#renderer.clear( lvls, z.x, z.y );
 
         this.#updated_zones.clear();
     }

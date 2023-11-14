@@ -3,28 +3,18 @@
     import type { ProgressEvent } from '$lib/Substrate.svelte';
     import { onMount, tick } from 'svelte';
     import Menu from '$lib/Menu.svelte';
-    import { Looks } from '$lib/Looks';
-    import { persisted } from 'svelte-persisted-store'
     import { browser, dev } from '$app/environment';
+    import { cfg } from '$lib/cfg-store.svelte';
 
-    let show_substrate = false;
-
-    let overlay = '';
-
-    const cfg = persisted( 'sb-app-cfg', {
-        seed: '12',
-        supersample: 1,
-        li: 2,
-    });
-
-    $: lo = Looks[ $cfg.li ];
+    let show_substrate = $state( false );
+    let overlay = $state( '' );
 
     function update_theme_color( color: string ) {
         if (!color || !browser) return;
         const meta_el = document.getElementById( 'meta-theme-color' );
         if (meta_el) meta_el.setAttribute( 'content', color );
     }
-    $: update_theme_color( lo.ui_theme.bg );
+    $effect(() => update_theme_color( cfg.look.ui_theme.bg ));
 
     const initstate: ProgressEvent = {
         started: false,
@@ -40,13 +30,13 @@
 
         runtime: 0,
     };
-    let state: ProgressEvent = initstate;
+    let progress: ProgressEvent = $state( initstate );
 
     function reset() {
         show_substrate = false;
-        state = initstate;
+        progress = initstate;
     }
-    $: $cfg, reset();
+    $effect(() => (cfg.seed, cfg.look_index, cfg.supersample, reset()));
 
     let before_start = false;
     async function toggle() {
@@ -54,22 +44,16 @@
         await tick();
         before_start = false;
 
-        if (show_substrate && playpause && !state.done) {
+        if (show_substrate && playpause && !progress.done) {
             playpause();
         }
         else {
-            if (state.done) $cfg.seed = (Math.random() + '').substring( 2 );
+            if (progress.done) cfg.seed = (Math.random() + '').substring( 2 );
             show_substrate = false;
-            state = initstate;
+            progress = initstate;
             await tick();
 
             show_substrate = true;
-        }
-    }
-
-    function pause() {
-        if (playpause && state.started && state.playing && !state.done) {
-            playpause();
         }
     }
 
@@ -81,67 +65,53 @@
         overlay = 'downloading ...';
         await new Promise( r => setTimeout( r, 1000 ));
 
-        download( lo.name );
+        download( cfg.look.name );
 
         overlay = '';
         await new Promise( r => setTimeout( r, 1000 ));
     }
 
-    let init = dev;
+    let init = $state( dev );
     onMount(() => {
         show_substrate = false;
-
-        //console.log( $cfg.seed );
-
-        if (!dev) setTimeout(() => {
-            init = true;
-        }, 300 );
+        if (!init) setTimeout(() => init = true, 0 );
     });
 </script>
 
 <main
     class:init
-    class:empty={!state.width && !state.height}
+    class:empty={!progress.width && !progress.height}
     class:before-start={before_start}
 
-    style:--ui--bg={lo.ui_theme.bg}
-    style:--ui--btn-bg={lo.ui_theme.btn_bg}
-    style:--ui--btn-fg={lo.ui_theme.btn_fg}
-    style:--canvas-bg={lo.look.lines.bg}
+    style:--ui--bg={cfg.look.ui_theme.bg}
+    style:--ui--btn-bg={cfg.look.ui_theme.btn_bg}
+    style:--ui--btn-fg={cfg.look.ui_theme.btn_fg}
+    style:--canvas-bg={cfg.look.look.lines.bg}
 >
     <div class=sbst>
         {#if show_substrate}
             <CSubstrate
-                seed={$cfg.seed}
-                supersample={$cfg.supersample}
-                look={lo.look}
-
+                onprogress={s => progress = s}
                 bind:playpause
                 bind:download
-
-                on:progress={e => state = e.detail}
             />
         {/if}
     </div>
 
     <Menu
-        bind:li={$cfg.li}
-        bind:supersample={$cfg.supersample}
+        started={progress.started}
+        playing={progress.playing}
 
-        started={state.started}
-        playing={state.playing}
-
-        on:toggle={toggle}
-        on:pause={pause}
-        on:download={file_download}
+        ontoggle={toggle}
+        ondownload={file_download}
     />
 
     <div class="info">
-        <div class="progress" class:started={state.started} class:done={state.done}>
-            <div style="width: {Math.min( 1, Math.max( 0, state.progress ) )*100}%"></div>
+        <div class="progress" class:started={progress.started} class:done={progress.done}>
+            <div style="width: {Math.min( 1, Math.max( 0, progress.progress ) )*100}%"></div>
         </div>
 
-        <div class=res>{state.width&&state.height ? `${state.width}x${state.height}` : ''}</div>
+        <div class=res>{progress.width&&progress.height ? `${progress.width}x${progress.height}` : ''}</div>
     </div>
 
 </main>
@@ -275,7 +245,5 @@
             padding: 8px;
         }
     }
-
-
 
 </style>

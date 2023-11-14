@@ -2,6 +2,9 @@ import seedrandom from "seedrandom";
 import type { Zone } from "./Zone";
 import type { CracksLook } from "$lib/Looks";
 
+type Point = [ x: number, y: number ];
+
+
 function get_padded_bounds( w: number, h: number, pad: number ) {
     if (pad < .5) pad = Math.floor( pad * Math.min( w, h ) );
 
@@ -331,9 +334,10 @@ export class Cracks {
     #get_angle_at( x: number, y: number ) {
         const r = this.#angles[ y ];
         if (r) return r[ x ];
+        return;
     }
     #set_angle_at( x: number, y: number, angle: number ): void {
-        let r = this.#angles[ y ];
+        const r = this.#angles[ y ];
         if (!r || !r[ x ]) {
             this.#placed_pixels++;
             if (!this.straggle_time) {
@@ -364,6 +368,7 @@ export class Cracks {
         }
 
         if (angle) return { x, y, angle };
+        return;
     }
 
     #add_crack( origin?: { x: number, y: number, angle: number } ): boolean {

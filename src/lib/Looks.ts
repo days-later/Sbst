@@ -1,4 +1,4 @@
-import type { TileRendererProp } from "./Sb/Zone"
+import type { TileRendererProp } from "./Sb/Zone";
 
 
 export type CracksLook = {

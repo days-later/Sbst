@@ -15,6 +15,7 @@ export function downloadCanvas( canvases: HTMLCanvasElement[], filename: string 
     const [ data, ... layers ] = canvases.map( c => {
         const ctx = c.getContext( '2d' );
         if (ctx) return ctx.getImageData( 0, 0, c.width, c.height );
+        return;
     }).filter( data => !!data ) as ImageData[];
 
     const size = data.width * data.height * 4;

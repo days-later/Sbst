@@ -1,19 +1,18 @@
 <script lang="ts">
-    import { createEventDispatcher } from 'svelte';
     import { Looks } from './Looks';
+    import { cfg } from './cfg-store.svelte';
 
-    const dispatch = createEventDispatcher<{ toggle: null, pause: null, download: null }>();
-
-    export let li: number;
-    export let supersample: number;
-
-    export let started: boolean;
-    export let playing: boolean;
+    const { started, playing, ontoggle, ondownload } = $props<{
+        started: boolean;
+        playing: boolean;
+        ontoggle: () => void;
+        ondownload: () => void;
+    }>();
 
 </script>
 
 <div class="menu">
-    <button class="play-pause" on:click={() => dispatch( 'toggle' )}>
+    <button class="play-pause" onclick={ontoggle}>
         {#if playing}
             <svg viewBox="0 -960 960 960"><path d="M559.5-252v-456h138v456h-138Zm-296 0v-456h139v456h-139Z"/></svg>
         {:else}
@@ -21,21 +20,19 @@
         {/if}
     </button>
 
-    <select class="look" bind:value={li} disabled={playing}>
+    <select class="look" bind:value={cfg.look_index} disabled={playing}>
         {#each Looks as l, i}
             <option value={i}>{l.name}</option>
         {/each}
     </select>
 
-    <select class="res" bind:value={supersample} disabled={playing}>
-        <option value={.25}>x.25</option>
-        <option value={.5}>x.5</option>
-        <option value={1}>x1</option>
-        <option value={2}>x2</option>
-        <option value={4}>x4</option>
+    <select class="res" bind:value={cfg.supersample} disabled={playing}>
+        {#each cfg.supersample_options as o}
+            <option value={o.value}>{o.label}</option>
+        {/each}
     </select>
 
-    <button class="download" disabled={!started || playing} on:click={() => dispatch( 'download' )}>
+    <button class="download" disabled={!started || playing} onclick={ondownload}>
         <svg viewBox="0 0 20 16" style="transform: scale(.4)">
             <path d="M0 0 L20 0 L10 12 Z" />
             <rect x=0 y=14 width=100% height=4 />
